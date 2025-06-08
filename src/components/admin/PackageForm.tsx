@@ -1,6 +1,7 @@
 
 "use client";
 
+import * as React from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm, type SubmitHandler } from "react-hook-form";
 import { z } from "zod";
@@ -117,7 +118,7 @@ export function PackageForm({ initialData, onSubmitForm, isSubmitting }: Package
         .replace(/--+/g, '-'); // Replace multiple - with single -
       form.setValue("slug", newSlug, { shouldValidate: true });
     }
-  }, [watchTitle, form, initialData?.slug]);
+  }, [watchTitle, form, initialData?.slug, form.setValue, form.formState.dirtyFields.slug]);
 
 
   return (
