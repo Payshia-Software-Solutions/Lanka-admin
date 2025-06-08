@@ -1,3 +1,4 @@
+
 import type { ReactNode } from 'react';
 import Link from 'next/link';
 import {
@@ -76,7 +77,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.label}>
-                <Link href={item.href} legacyBehavior passHref>
+                <Link href={item.href} asChild>
                   <SidebarMenuButton 
                     className="text-sm"
                     tooltip={item.label}
