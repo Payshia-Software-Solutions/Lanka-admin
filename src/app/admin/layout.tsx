@@ -15,9 +15,6 @@ import {
   LogOut,
   Sun,
   Moon,
-  ChevronsLeft,
-  ChevronsRight,
-  PanelLeft,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -42,9 +39,6 @@ import {
   SidebarInset,
   SidebarRail
 } from '@/components/ui/sidebar';
-import { cn } from '@/lib/utils';
-import Image from 'next/image';
-
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
@@ -77,15 +71,16 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
           <SidebarMenu>
             {navItems.map((item) => (
               <SidebarMenuItem key={item.label}>
-                <Link href={item.href} asChild>
-                  <SidebarMenuButton 
-                    className="text-sm"
-                    tooltip={item.label}
-                  >
+                <SidebarMenuButton
+                  asChild
+                  className="text-sm"
+                  tooltip={item.label}
+                >
+                  <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
                     <span>{item.label}</span>
-                  </SidebarMenuButton>
-                </Link>
+                  </Link>
+                </SidebarMenuButton>
               </SidebarMenuItem>
             ))}
           </SidebarMenu>
