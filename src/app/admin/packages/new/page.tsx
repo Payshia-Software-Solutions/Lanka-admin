@@ -8,6 +8,9 @@ import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useToast } from "@/hooks/use-toast";
+import type { Package } from "@/lib/types";
+
+const LOCAL_STORAGE_PACKAGES_KEY = "LANKA_ADMIN_PACKAGES";
 
 export default function NewPackagePage() {
   const router = useRouter();
@@ -16,16 +19,52 @@ export default function NewPackagePage() {
 
   const handleSubmit = async (data: PackageFormData) => {
     setIsSubmitting(true);
-    console.log("Creating new package:", data);
-    // Placeholder for API call to create package
-    await new Promise(resolve => setTimeout(resolve, 1000)); // Simulate API delay
     
-    toast({
-      title: "Package Created",
-      description: `Package "${data.title}" has been successfully created.`,
-    });
-    setIsSubmitting(false);
-    router.push("/admin/packages"); // Redirect to packages list
+    try {
+      if (typeof window !== 'undefined') {
+        const storedPackagesRaw = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
+        let packages: Package[] = [];
+        if (storedPackagesRaw) {
+          packages = JSON.parse(storedPackagesRaw).map((p: any) => ({
+            ...p,
+            availabilityStart: p.availabilityStart ? new Date(p.availabilityStart) : undefined,
+            availabilityEnd: p.availabilityEnd ? new Date(p.availabilityEnd) : undefined,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+          }));
+        }
+
+        const newPackage: Package = {
+          ...data,
+          id: `pkg${Date.now()}`, // Simple unique ID
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          // Ensure array fields are correctly assigned from form data
+          images: data.images || [],
+          inclusions: data.inclusions || [],
+          exclusions: data.exclusions || [],
+          destinations: data.destinations || [],
+        };
+        
+        packages.push(newPackage);
+        localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(packages));
+
+        toast({
+          title: "Package Created",
+          description: `Package "${data.title}" has been successfully created.`,
+        });
+        router.push("/admin/packages");
+      }
+    } catch (error) {
+      console.error("Error creating package:", error);
+      toast({
+        title: "Error",
+        description: "Could not create the package. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (

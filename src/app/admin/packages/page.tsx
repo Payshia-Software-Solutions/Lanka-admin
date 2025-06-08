@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -9,69 +9,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, DollarSign, CalendarDays } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, DollarSign, CalendarDays, Loader2 } from "lucide-react";
 import type { Package, PackageStatus } from "@/lib/types";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
+import { getInitialPackages } from '@/lib/package-data';
 
-// Exporting sample data so it can be used by edit page temporarily
-export const samplePackagesData: Package[] = [
-  {
-    id: "pkg1",
-    slug: "kandy-cultural-escape",
-    title: "Kandy Cultural Escape",
-    description: "Explore the rich heritage of Kandy, the last royal capital of Sri Lanka. Visit the Temple of the Tooth Relic and enjoy a cultural show.",
-    price: 350,
-    durationDays: 3,
-    websiteId: "1",
-    category: "Cultural",
-    coverImageUrl: "https://placehold.co/600x400.png",
-    images: ["https://placehold.co/600x400.png", "https://placehold.co/600x400.png"],
-    status: "Published",
-    inclusions: ["Accommodation", "Breakfast", "Guided Tours"],
-    exclusions: ["Lunch", "Dinner", "Entrance Fees"],
-    availabilityStart: new Date(2024, 0, 1),
-    availabilityEnd: new Date(2024, 11, 31),
-    createdAt: new Date(2023, 10, 1),
-    updatedAt: new Date(2023, 11, 1),
-    destinations: [{id: "dest1", name: "Kandy", description: "...", location:"...", images: [], websiteId: "1"}],
-  },
-  {
-    id: "pkg2",
-    slug: "ella-adventure-trek",
-    title: "Ella Adventure Trek",
-    description: "Experience the breathtaking landscapes of Ella with hikes to Little Adam's Peak and Ella Rock. Enjoy stunning views and lush tea plantations.",
-    price: 480,
-    durationDays: 4,
-    websiteId: "2",
-    category: "Adventure",
-    coverImageUrl: "https://placehold.co/600x400.png",
-    status: "Draft",
-    inclusions: ["Accommodation", "All Meals", "Trekking Guide", "Transport"],
-    exclusions: ["Personal Expenses"],
-    createdAt: new Date(2023, 9, 15),
-    updatedAt: new Date(2023, 10, 15),
-    destinations: [{id: "dest2", name: "Ella", description: "...", location:"...", images: [], websiteId: "2"}],
-  },
-  {
-    id: "pkg3",
-    slug: "south-coast-beach-bliss",
-    title: "South Coast Beach Bliss",
-    description: "Relax and unwind on the beautiful beaches of Sri Lanka's south coast. Enjoy sun, sand, and surf in Mirissa and Unawatuna.",
-    price: 600,
-    durationDays: 5,
-    websiteId: "1",
-    category: "Beach",
-    coverImageUrl: "https://placehold.co/600x400.png",
-    status: "Published",
-    inclusions: ["Beachfront Accommodation", "Breakfast", "Surfing Lessons"],
-    exclusions: ["Flights", "Visa"],
-    availabilityStart: new Date(2024, 2, 1),
-    createdAt: new Date(2023, 11, 10),
-    updatedAt: new Date(2023, 11, 20),
-    destinations: [{id: "dest3", name: "Mirissa", description: "...", location:"...", images: [], websiteId: "1"}],
-  },
-];
+const LOCAL_STORAGE_PACKAGES_KEY = "LANKA_ADMIN_PACKAGES";
 
 const statusColors: Record<PackageStatus, string> = {
   Draft: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -81,17 +25,60 @@ const statusColors: Record<PackageStatus, string> = {
 
 
 export default function PackagesPage() {
-  const [packages, setPackages] = useState<Package[]>(samplePackagesData);
+  const [packages, setPackages] = useState<Package[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
 
+  useEffect(() => {
+    setIsLoading(true);
+    if (typeof window !== 'undefined') {
+      const storedPackagesRaw = localStorage.getItem(LOCAL_STORAGE_PACKAGES_KEY);
+      if (storedPackagesRaw) {
+        try {
+          const storedPackages = JSON.parse(storedPackagesRaw).map((p: any) => ({
+            ...p,
+            availabilityStart: p.availabilityStart ? new Date(p.availabilityStart) : undefined,
+            availabilityEnd: p.availabilityEnd ? new Date(p.availabilityEnd) : undefined,
+            createdAt: new Date(p.createdAt),
+            updatedAt: new Date(p.updatedAt),
+          }));
+          setPackages(storedPackages);
+        } catch (error) {
+          console.error("Error parsing packages from localStorage:", error);
+          const initialData = getInitialPackages();
+          setPackages(initialData);
+          localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(initialData));
+        }
+      } else {
+        const initialData = getInitialPackages();
+        setPackages(initialData);
+        localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(initialData));
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
   const handleDeletePackage = (packageId: string) => {
-    // This is a placeholder. In a real app, you'd call an API.
-    setPackages((prevPackages) => prevPackages.filter((pkg) => pkg.id !== packageId));
+    const updatedPackages = packages.filter((pkg) => pkg.id !== packageId);
+    setPackages(updatedPackages);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_PACKAGES_KEY, JSON.stringify(updatedPackages));
+    }
     toast({
       title: "Package Deleted",
       description: `Package with ID ${packageId} has been removed.`,
+      variant: "destructive"
     });
   };
+  
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading packages...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -154,7 +141,7 @@ export default function PackagesPage() {
                       <Badge variant="outline" className={`font-semibold ${statusColors[pkg.status]}`}>{pkg.status}</Badge>
                     </TableCell>
                     <TableCell>{pkg.websiteId}</TableCell>
-                    <TableCell>{format(pkg.updatedAt, "PP")}</TableCell>
+                    <TableCell>{format(new Date(pkg.updatedAt), "PP")}</TableCell>
                     <TableCell className="text-right">
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -203,3 +190,4 @@ export default function PackagesPage() {
     </div>
   );
 }
+

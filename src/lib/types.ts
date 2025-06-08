@@ -1,4 +1,5 @@
 
+
 export interface Website {
   id: string;
   name: string;
@@ -36,7 +37,7 @@ export interface Package {
   description: string;
   price: number;
   durationDays: number;
-  destinations?: Destination[]; // IDs or full objects
+  destinations?: string[]; // Changed from Destination[] to string[]
   websiteId: string;
   website?: Website;
   itineraries?: Itinerary[];
@@ -112,3 +113,4 @@ export interface User {
   phone?: string;
   // Password typically not sent to client
 }
+
