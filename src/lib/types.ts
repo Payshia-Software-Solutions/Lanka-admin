@@ -1,3 +1,4 @@
+
 export interface Website {
   id: string;
   name: string;
@@ -26,9 +27,13 @@ export interface Destination {
   metaKeywords?: string[];
 }
 
+export type PackageStatus = 'Draft' | 'Published' | 'Archived';
+
 export interface Package {
   id: string;
+  slug: string;
   title: string;
+  description: string;
   price: number;
   durationDays: number;
   destinations?: Destination[]; // IDs or full objects
@@ -37,6 +42,16 @@ export interface Package {
   itineraries?: Itinerary[];
   availabilityStart?: Date;
   availabilityEnd?: Date;
+  category?: string;
+  coverImageUrl?: string;
+  images?: string[]; // Gallery images
+  status: PackageStatus;
+  inclusions?: string[];
+  exclusions?: string[];
+  metaTitle?: string;
+  metaDescription?: string;
+  createdAt: Date;
+  updatedAt: Date;
 }
 
 export interface Itinerary {
