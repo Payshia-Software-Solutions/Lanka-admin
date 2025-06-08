@@ -14,7 +14,8 @@ import type { Package, PackageStatus } from "@/lib/types";
 import { format } from 'date-fns';
 import { useToast } from "@/hooks/use-toast";
 
-const samplePackagesData: Package[] = [
+// Exporting sample data so it can be used by edit page temporarily
+export const samplePackagesData: Package[] = [
   {
     id: "pkg1",
     slug: "kandy-cultural-escape",
@@ -33,7 +34,7 @@ const samplePackagesData: Package[] = [
     availabilityEnd: new Date(2024, 11, 31),
     createdAt: new Date(2023, 10, 1),
     updatedAt: new Date(2023, 11, 1),
-    destinations: [],
+    destinations: [{id: "dest1", name: "Kandy", description: "...", location:"...", images: [], websiteId: "1"}],
   },
   {
     id: "pkg2",
@@ -50,7 +51,7 @@ const samplePackagesData: Package[] = [
     exclusions: ["Personal Expenses"],
     createdAt: new Date(2023, 9, 15),
     updatedAt: new Date(2023, 10, 15),
-    destinations: [],
+    destinations: [{id: "dest2", name: "Ella", description: "...", location:"...", images: [], websiteId: "2"}],
   },
   {
     id: "pkg3",
@@ -68,7 +69,7 @@ const samplePackagesData: Package[] = [
     availabilityStart: new Date(2024, 2, 1),
     createdAt: new Date(2023, 11, 10),
     updatedAt: new Date(2023, 11, 20),
-    destinations: [],
+    destinations: [{id: "dest3", name: "Mirissa", description: "...", location:"...", images: [], websiteId: "1"}],
   },
 ];
 
