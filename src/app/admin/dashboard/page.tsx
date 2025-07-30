@@ -1,10 +1,10 @@
-"use client"; // For Recharts client-side rendering
+"use client";
 
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Users, MapPin, Package, MessageSquare, DollarSign, Globe } from "lucide-react";
+import dynamic from 'next/dynamic';
 
 const sampleChartData = [
   { name: 'Jan', inquiries: 30, packagesSold: 20 },
@@ -14,6 +14,38 @@ const sampleChartData = [
   { name: 'May', inquiries: 70, packagesSold: 50 },
   { name: 'Jun', inquiries: 85, packagesSold: 60 },
 ];
+
+const DynamicBarChart = dynamic(
+  () => import('recharts').then(mod => {
+    const { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } = mod;
+    
+    // This component will be rendered on the client side
+    const ClientBarChart = (props: any) => (
+      <ResponsiveContainer width="100%" height="100%">
+        <BarChart data={props.data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+          <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} />
+          <YAxis stroke="hsl(var(--foreground))" fontSize={12} />
+          <Tooltip
+            contentStyle={{
+              backgroundColor: "hsl(var(--background))",
+              borderColor: "hsl(var(--border))",
+              borderRadius: "var(--radius)",
+            }}
+            labelStyle={{ color: "hsl(var(--foreground))" }}
+          />
+          <Legend wrapperStyle={{ fontSize: "14px" }} />
+          <Bar dataKey="inquiries" fill="hsl(var(--primary))" name="Inquiries" radius={[4, 4, 0, 0]} />
+          <Bar dataKey="packagesSold" fill="hsl(var(--accent))" name="Packages Sold" radius={[4, 4, 0, 0]} />
+        </BarChart>
+      </ResponsiveContainer>
+    );
+    ClientBarChart.displayName = 'ClientBarChart';
+    return ClientBarChart;
+  }),
+  { ssr: false, loading: () => <p className="text-center text-muted-foreground">Loading chart...</p> }
+);
+
 
 export default function DashboardPage() {
   return (
@@ -34,24 +66,7 @@ export default function DashboardPage() {
             <CardDescription>Overview of inquiries and packages sold.</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] p-2">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={sampleChartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="name" stroke="hsl(var(--foreground))" fontSize={12} />
-                <YAxis stroke="hsl(var(--foreground))" fontSize={12} />
-                <Tooltip
-                  contentStyle={{
-                    backgroundColor: "hsl(var(--background))",
-                    borderColor: "hsl(var(--border))",
-                    borderRadius: "var(--radius)",
-                  }}
-                  labelStyle={{ color: "hsl(var(--foreground))" }}
-                />
-                <Legend wrapperStyle={{ fontSize: "14px" }} />
-                <Bar dataKey="inquiries" fill="hsl(var(--primary))" name="Inquiries" radius={[4, 4, 0, 0]} />
-                <Bar dataKey="packagesSold" fill="hsl(var(--accent))" name="Packages Sold" radius={[4, 4, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
+            <DynamicBarChart data={sampleChartData} />
           </CardContent>
         </Card>
 
