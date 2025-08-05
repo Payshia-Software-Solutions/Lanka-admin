@@ -1,5 +1,7 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -24,51 +26,63 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Globe } from "lucide-react";
+import { PlusCircle, MoreHorizontal, Edit, Trash2, Globe, Loader2 } from "lucide-react";
 import type { Destination } from "@/lib/types";
+import { useToast } from "@/hooks/use-toast";
+import { getInitialDestinations } from "@/lib/destination-data";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-// Dummy data for destinations
-const sampleDestinations: Destination[] = [
-  {
-    id: "dest1",
-    name: "Kandy",
-    description:
-      "A large city in central Sri Lanka. It's set on a plateau surrounded by mountains, which are home to tea plantations and biodiverse rainforest.",
-    location: "Kandy, Sri Lanka",
-    images: ["https://placehold.co/600x400.png"],
-    websiteId: "1",
-  },
-  {
-    id: "dest2",
-    name: "Ella",
-    description:
-      "A small town in the Badulla District of Uva Province, Sri Lanka. It is approximately 200 kilometres east of Colombo and is situated at an elevation of 1,041 metres above sea level.",
-    location: "Ella, Sri Lanka",
-    images: ["https://placehold.co/600x400.png"],
-    websiteId: "2",
-  },
-  {
-    id: "dest3",
-    name: "Mirissa",
-    description:
-      "A small town on the south coast of Sri Lanka, located in the Matara District of the Southern Province. It is a popular tourist destination for its beaches and whale watching.",
-    location: "Mirissa, Sri Lanka",
-    images: ["https://placehold.co/600x400.png"],
-    websiteId: "1",
-  },
-  {
-    id: "dest4",
-    name: "Sigiriya",
-    description:
-      "An ancient rock fortress located in the northern Matale District near the town of Dambulla in the Central Province, Sri Lanka. The name refers to a site of historical and archaeological significance that is dominated by a massive column of rock nearly 200 metres high.",
-    location: "Sigiriya, Sri Lanka",
-    images: ["https://placehold.co/600x400.png"],
-    websiteId: "3",
-  },
-];
+const LOCAL_STORAGE_DESTINATIONS_KEY = "LANKA_ADMIN_DESTINATIONS";
 
 export default function DestinationsPage() {
-  // TODO: Implement state and handlers for CRUD operations
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    setIsLoading(true);
+    if (typeof window !== 'undefined') {
+      const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
+      if (storedDestinationsRaw) {
+        try {
+          const storedDestinations = JSON.parse(storedDestinationsRaw);
+          setDestinations(storedDestinations);
+        } catch (error) {
+          console.error("Error parsing destinations from localStorage:", error);
+          const initialData = getInitialDestinations();
+          setDestinations(initialData);
+          localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(initialData));
+        }
+      } else {
+        const initialData = getInitialDestinations();
+        setDestinations(initialData);
+        localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(initialData));
+      }
+    }
+    setIsLoading(false);
+  }, []);
+
+  const handleDeleteDestination = (destinationId: string) => {
+    const updatedDestinations = destinations.filter((dest) => dest.id !== destinationId);
+    setDestinations(updatedDestinations);
+    if (typeof window !== 'undefined') {
+      localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(updatedDestinations));
+    }
+    toast({
+      title: "Destination Deleted",
+      description: `Destination has been successfully removed.`,
+      variant: "destructive"
+    });
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+        <p className="ml-4 text-lg">Loading destinations...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
@@ -76,9 +90,11 @@ export default function DestinationsPage() {
         <h1 className="text-3xl font-bold font-headline text-foreground">
           Destination Management
         </h1>
-        <Button>
-          <PlusCircle className="mr-2 h-5 w-5" />
-          Add New Destination
+        <Button asChild>
+          <Link href="/admin/destinations/new">
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Add New Destination
+          </Link>
         </Button>
       </div>
       <Card className="shadow-lg">
@@ -91,7 +107,7 @@ export default function DestinationsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          {sampleDestinations.length > 0 ? (
+          {destinations.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
@@ -102,7 +118,7 @@ export default function DestinationsPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {sampleDestinations.map((destination) => (
+                {destinations.map((destination) => (
                   <TableRow key={destination.id}>
                     <TableCell className="font-medium">
                       {destination.name}
@@ -126,15 +142,36 @@ export default function DestinationsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end">
                           <DropdownMenuLabel>Actions</DropdownMenuLabel>
-                          <DropdownMenuItem>
-                            <Edit className="mr-2 h-4 w-4" />
-                            <span>Edit</span>
+                          <DropdownMenuItem asChild>
+                            <Link href={`/admin/destinations/${destination.id}/edit`}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              <span>Edit</span>
+                            </Link>
                           </DropdownMenuItem>
                           <DropdownMenuSeparator />
-                          <DropdownMenuItem className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            <span>Delete</span>
-                          </DropdownMenuItem>
+                          <AlertDialog>
+                            <AlertDialogTrigger asChild>
+                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                <span>Delete</span>
+                              </DropdownMenuItem>
+                            </AlertDialogTrigger>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete the
+                                  destination "{destination.name}".
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={() => handleDeleteDestination(destination.id)} className="bg-destructive hover:bg-destructive/90">
+                                  Yes, delete destination
+                                </AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
                         </DropdownMenuContent>
                       </DropdownMenu>
                     </TableCell>
@@ -150,7 +187,6 @@ export default function DestinationsPage() {
           )}
         </CardContent>
       </Card>
-      {/* TODO: Add DestinationForm in a Dialog or separate page */}
     </div>
   );
 }
