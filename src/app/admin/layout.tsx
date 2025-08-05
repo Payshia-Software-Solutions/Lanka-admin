@@ -1,5 +1,8 @@
 
+'use client';
+
 import type { ReactNode } from 'react';
+import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard,
@@ -53,6 +56,26 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+
+  useEffect(() => {
+    const theme = localStorage.getItem('theme');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
+  const toggleTheme = () => {
+    if (document.documentElement.classList.contains('dark')) {
+      document.documentElement.classList.remove('dark');
+      localStorage.setItem('theme', 'light');
+    } else {
+      document.documentElement.classList.add('dark');
+      localStorage.setItem('theme', 'dark');
+    }
+  };
+
   return (
     <SidebarProvider defaultOpen>
       <Sidebar 
@@ -121,7 +144,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
             <div className="flex-1">
               {/* Breadcrumbs or page title can go here */}
             </div>
-            <Button variant="ghost" size="icon" className="rounded-full">
+            <Button variant="ghost" size="icon" className="rounded-full" onClick={toggleTheme}>
               <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
               <span className="sr-only">Toggle theme</span>
