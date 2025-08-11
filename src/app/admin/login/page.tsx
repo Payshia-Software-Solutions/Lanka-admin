@@ -67,7 +67,7 @@ export default function LoginPage() {
               <Input 
                 id="password" 
                 type="password"
-                placeholder="admin123" 
+                placeholder="••••••••" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
@@ -80,7 +80,10 @@ export default function LoginPage() {
           </form>
           <div className="mt-6 text-center text-sm">
             <p className="text-muted-foreground">
-              Contact support if you have issues logging in.
+              Don't have an account?{' '}
+              <Link href="/admin/signup" className="font-medium text-primary hover:underline">
+                Sign Up
+              </Link>
             </p>
           </div>
         </CardContent>
