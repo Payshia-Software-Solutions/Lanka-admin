@@ -37,14 +37,14 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          company_name: companyName, // The backend's CompanyController will use this
+          company_name: companyName,
           full_name: fullName,
           address: address,
           country: country,
           phone_number: phoneNumber,
           email: email,
           password: password,
-          role: 'admin', // Hardcoded role for this signup form
+          role: 'admin',
         }),
       });
 
@@ -55,15 +55,15 @@ export default function SignupPage() {
         });
         router.push('/admin/login');
       } else {
-        // Try to get a meaningful error message from the backend response
         const errorText = await response.text();
         let errorMessage = 'An unknown error occurred during signup.';
         try {
             const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message || errorJson.error || errorMessage;
+            errorMessage = errorJson.message || errorJson.error || `Server responded with status: ${response.status}`;
         } catch (e) {
-             if (errorText.length > 0 && errorText.length < 100) {
-              errorMessage = errorText;
+            // If parsing fails, the error text itself might be useful
+            if (errorText) {
+              errorMessage = `Server Error: ${errorText}`;
             }
         }
         throw new Error(errorMessage);
