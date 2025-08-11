@@ -37,14 +37,14 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: companyName,
-          full_name: fullName,
+          name: companyName, // For the company
+          full_name: fullName, // For the user
           address: address,
           country: country,
           phone_number: phoneNumber,
           email: email,
           password: password,
-          role: 'admin', // Set the role to 'admin'
+          role: 'admin', // Explicitly set role for admin creation
         }),
       });
 
@@ -61,7 +61,7 @@ export default function SignupPage() {
         toast({
           variant: "destructive",
           title: "Signup Failed",
-          description: data.message || "An unexpected error occurred. Please try again.",
+          description: data.message || data.error || "An unexpected error occurred. Please try again.",
         });
       }
     } catch (error) {
@@ -97,6 +97,7 @@ export default function SignupPage() {
                   className="text-base"
                   value={companyName}
                   onChange={(e) => setCompanyName(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
                <div className="space-y-2">
@@ -109,6 +110,7 @@ export default function SignupPage() {
                   className="text-base"
                   value={fullName}
                   onChange={(e) => setFullName(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
@@ -123,6 +125,7 @@ export default function SignupPage() {
                   className="text-base"
                   value={address}
                   onChange={(e) => setAddress(e.target.value)}
+                  disabled={isLoading}
                 />
             </div>
 
@@ -137,6 +140,7 @@ export default function SignupPage() {
                     className="text-base"
                     value={country}
                     onChange={(e) => setCountry(e.target.value)}
+                    disabled={isLoading}
                     />
                 </div>
                 <div className="space-y-2">
@@ -149,6 +153,7 @@ export default function SignupPage() {
                     className="text-base"
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value)}
+                    disabled={isLoading}
                     />
                 </div>
             </div>
@@ -164,6 +169,7 @@ export default function SignupPage() {
                   className="text-base"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
               <div className="space-y-2">
@@ -176,6 +182,7 @@ export default function SignupPage() {
                   className="text-base"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
+                  disabled={isLoading}
                 />
               </div>
             </div>
