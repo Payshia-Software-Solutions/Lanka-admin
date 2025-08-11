@@ -37,7 +37,7 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          company_name: companyName,
+          name: companyName, // Corrected from company_name
           full_name: fullName,
           address: address,
           country: country,
@@ -154,7 +154,7 @@ export default function SignupPage() {
                     <Input 
                     id="phoneNumber" 
                     type="tel" 
-                    placeholder="e.g., +1234567891" 
+                    placeholder="e.g., +12345678901" 
                     required 
                     className="text-base"
                     value={phoneNumber}
