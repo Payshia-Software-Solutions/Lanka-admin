@@ -4,7 +4,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   LayoutDashboard,
   Globe,
@@ -58,6 +58,7 @@ const navItems = [
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     const theme = localStorage.getItem('theme');
@@ -76,6 +77,10 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       document.documentElement.classList.add('dark');
       localStorage.setItem('theme', 'dark');
     }
+  };
+
+  const handleLogout = () => {
+    router.push('/admin/login');
   };
 
   // Do not render layout for login page
@@ -138,7 +143,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                 <Settings className="mr-2 h-4 w-4" />
                 <span>Settings</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
+              <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
                 <span>Log out</span>
               </DropdownMenuItem>
