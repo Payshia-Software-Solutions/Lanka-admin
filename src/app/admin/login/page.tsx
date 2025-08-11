@@ -7,18 +7,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
+import { useToast } from '@/hooks/use-toast';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const router = useRouter();
+  const { toast } = useToast();
 
   const handleSubmit = (event: FormEvent) => {
     event.preventDefault();
-    // Placeholder for actual login logic
-    console.log("Login attempt with:", { email, password });
-    // On successful login, redirect to dashboard
-    router.push('/admin/dashboard');
+    
+    // Hardcoded login credentials
+    if (email === 'admin@example.com' && password === 'admin123') {
+      toast({
+        title: "Login Successful",
+        description: "Welcome back! Redirecting to dashboard...",
+      });
+      // On successful login, redirect to dashboard
+      router.push('/admin/dashboard');
+    } else {
+      toast({
+        variant: "destructive",
+        title: "Login Failed",
+        description: "Invalid email or password. Please try again.",
+      });
+    }
   };
 
   return (
@@ -52,7 +66,8 @@ export default function LoginPage() {
               </div>
               <Input 
                 id="password" 
-                type="password" 
+                type="password"
+                placeholder="admin123" 
                 required 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}

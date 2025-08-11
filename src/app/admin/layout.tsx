@@ -4,6 +4,7 @@
 import type { ReactNode } from 'react';
 import { useEffect } from 'react';
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
   Globe,
@@ -56,6 +57,7 @@ const navItems = [
 ];
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
 
   useEffect(() => {
     const theme = localStorage.getItem('theme');
@@ -75,6 +77,12 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
       localStorage.setItem('theme', 'dark');
     }
   };
+
+  // Do not render layout for login page
+  if (pathname === '/admin/login') {
+    return <>{children}</>;
+  }
+
 
   return (
     <SidebarProvider defaultOpen>
@@ -98,6 +106,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   asChild
                   className="text-sm"
                   tooltip={item.label}
+                  isActive={pathname.startsWith(item.href)}
                 >
                   <Link href={item.href}>
                     <item.icon className="h-5 w-5" />
