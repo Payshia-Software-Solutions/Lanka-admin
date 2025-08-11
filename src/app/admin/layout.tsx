@@ -1,4 +1,5 @@
 
+
 'use client';
 
 import type { ReactNode } from 'react';
@@ -149,9 +150,9 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
                   <AvatarImage src="https://placehold.co/100x100.png" alt="Admin User" data-ai-hint="user avatar" />
                   <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                 </Avatar>
-                <div className="group-data-[collapsible=icon]:hidden">
-                  <p className="text-sm font-medium">{userProfile.name}</p>
-                  <p className="text-xs text-muted-foreground">{userProfile.email}</p>
+                <div className="group-data-[collapsible=icon]:hidden flex-1 overflow-hidden">
+                  <p className="text-sm font-medium truncate">{userProfile.name}</p>
+                  <p className="text-xs text-muted-foreground truncate">{userProfile.email}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
