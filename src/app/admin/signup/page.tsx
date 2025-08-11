@@ -31,45 +31,64 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost/travel_web_server/users', {
+      // Step 1: Create the company
+      const companyResponse = await fetch('http://localhost/travel_web_server/companies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: companyName }),
+      });
+
+      const companyData = await companyResponse.json();
+
+      if (!companyResponse.ok) {
+        throw new Error(companyData.message || companyData.error || 'Failed to create company.');
+      }
+      
+      const companyId = companyData.id;
+
+      if (!companyId) {
+        throw new Error('Company ID was not returned from the server.');
+      }
+
+      // Step 2: Create the user with the new company ID
+      const userResponse = await fetch('http://localhost/travel_web_server/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: companyName, // For the company
-          full_name: fullName, // For the user
+          company_id: companyId,
+          full_name: fullName,
           address: address,
           country: country,
           phone_number: phoneNumber,
           email: email,
           password: password,
-          role: 'admin', // Explicitly set role for admin creation
+          role: 'admin',
         }),
       });
 
-      const data = await response.json();
+      const userData = await userResponse.json();
 
-      if (response.ok) {
+      if (userResponse.ok) {
         toast({
           title: "Signup Successful!",
           description: "Your account has been created. Please log in.",
         });
         router.push('/admin/login');
       } else {
-        // Handle specific error messages from the backend
-        toast({
-          variant: "destructive",
-          title: "Signup Failed",
-          description: data.message || data.error || "An unexpected error occurred. Please try again.",
-        });
+        throw new Error(userData.message || userData.error || 'Failed to create user.');
       }
+
     } catch (error) {
       console.error('Signup fetch error:', error);
+      const errorMessage = error instanceof Error ? error.message : "An unexpected error occurred.";
       toast({
         variant: "destructive",
-        title: "Network Error",
-        description: "Could not connect to the server. Please check your connection and try again.",
+        title: "Signup Failed",
+        description: errorMessage,
       });
     } finally {
       setIsLoading(false);
