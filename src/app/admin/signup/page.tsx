@@ -9,22 +9,72 @@ import { Label } from "@/components/ui/label";
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = (event: FormEvent) => {
+  // State for all form fields
+  const [companyName, setCompanyName] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [address, setAddress] = useState('');
+  const [country, setCountry] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
+
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    // Placeholder for signup logic
-    toast({
-      title: "Signup Submitted",
-      description: "Your account is pending creation. You will be redirected to the login page.",
-    });
-    // Redirect to login page after showing toast
-    setTimeout(() => {
-      router.push('/admin/login');
-    }, 2000);
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost/travel_web_server/users', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          companyName,
+          name: fullName,
+          address,
+          country,
+          phone: phoneNumber,
+          email,
+          password,
+          // Assuming a default role for new signups
+          role: 'admin', 
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Signup Successful!",
+          description: "Your account has been created. Please log in.",
+        });
+        router.push('/admin/login');
+      } else {
+        // Handle specific error messages from the backend
+        toast({
+          variant: "destructive",
+          title: "Signup Failed",
+          description: data.message || "An unexpected error occurred. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error('Signup fetch error:', error);
+      toast({
+        variant: "destructive",
+        title: "Network Error",
+        description: "Could not connect to the server. Please check your connection and try again.",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -46,6 +96,8 @@ export default function SignupPage() {
                   placeholder="e.g., Lanka Tours Inc." 
                   required 
                   className="text-base"
+                  value={companyName}
+                  onChange={(e) => setCompanyName(e.target.value)}
                 />
               </div>
                <div className="space-y-2">
@@ -56,6 +108,8 @@ export default function SignupPage() {
                   placeholder="e.g., John Doe" 
                   required 
                   className="text-base"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                 />
               </div>
             </div>
@@ -68,6 +122,8 @@ export default function SignupPage() {
                   placeholder="e.g., 456 New Address, City" 
                   required 
                   className="text-base"
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
                 />
             </div>
 
@@ -80,6 +136,8 @@ export default function SignupPage() {
                     placeholder="e.g., Sri Lanka" 
                     required 
                     className="text-base"
+                    value={country}
+                    onChange={(e) => setCountry(e.target.value)}
                     />
                 </div>
                 <div className="space-y-2">
@@ -90,6 +148,8 @@ export default function SignupPage() {
                     placeholder="e.g., +1234567891" 
                     required 
                     className="text-base"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
                     />
                 </div>
             </div>
@@ -103,6 +163,8 @@ export default function SignupPage() {
                   placeholder="you@example.com" 
                   required 
                   className="text-base"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                 />
               </div>
               <div className="space-y-2">
@@ -113,12 +175,15 @@ export default function SignupPage() {
                   placeholder="Create a strong password" 
                   required 
                   className="text-base"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
             </div>
 
-            <Button type="submit" className="w-full text-lg py-3 mt-4">
-              Create Account
+            <Button type="submit" className="w-full text-lg py-3 mt-4" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? "Creating Account..." : "Create Account"}
             </Button>
           </form>
            <div className="mt-6 text-center text-sm">
