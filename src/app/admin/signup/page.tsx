@@ -44,6 +44,7 @@ export default function SignupPage() {
           phone_number: phoneNumber,
           email: email,
           password: password,
+          role: 'admin', // Set the role to 'admin'
         }),
       });
 
