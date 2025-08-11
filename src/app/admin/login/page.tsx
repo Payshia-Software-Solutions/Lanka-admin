@@ -38,8 +38,14 @@ export default function LoginPage() {
           title: "Login Successful",
           description: "Welcome back! Redirecting to dashboard...",
         });
-        // On successful login, you might want to store a token from the response
-        // e.g., localStorage.setItem('authToken', data.token);
+        // Store user data in localStorage
+        if (data && data.full_name && data.email) {
+            localStorage.setItem('loggedInUser', JSON.stringify({
+                name: data.full_name,
+                email: data.email,
+            }));
+        }
+        
         router.push('/admin/dashboard');
       } else {
         toast({

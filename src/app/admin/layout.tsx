@@ -2,7 +2,7 @@
 'use client';
 
 import type { ReactNode } from 'react';
-import { useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -56,9 +56,15 @@ const navItems = [
   { href: '/admin/pricing-suggestions', label: 'AI Pricing', icon: DollarSign },
 ];
 
+interface UserProfile {
+    name: string;
+    email: string;
+}
+
 export default function AdminLayout({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const router = useRouter();
+  const [userProfile, setUserProfile] = useState<UserProfile>({ name: "Admin User", email: "admin@example.com" });
 
   useEffect(() => {
     const theme = localStorage.getItem('theme');
@@ -67,7 +73,19 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     } else {
       document.documentElement.classList.remove('dark');
     }
-  }, []);
+
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (storedUser) {
+        try {
+            const parsedUser = JSON.parse(storedUser);
+            if (parsedUser.name && parsedUser.email) {
+                setUserProfile(parsedUser);
+            }
+        } catch (error) {
+            console.error("Failed to parse user from localStorage", error);
+        }
+    }
+  }, [pathname]); // Re-check on route change if needed
 
   const toggleTheme = () => {
     if (document.documentElement.classList.contains('dark')) {
@@ -80,6 +98,7 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
   };
 
   const handleLogout = () => {
+    localStorage.removeItem('loggedInUser');
     router.push('/admin/login');
   };
 
@@ -128,11 +147,11 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
               <Button variant="ghost" className="w-full justify-start gap-2 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:size-10 group-data-[collapsible=icon]:p-0">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src="https://placehold.co/100x100.png" alt="Admin User" data-ai-hint="user avatar" />
-                  <AvatarFallback>AD</AvatarFallback>
+                  <AvatarFallback>{userProfile.name?.charAt(0).toUpperCase() || 'A'}</AvatarFallback>
                 </Avatar>
                 <div className="group-data-[collapsible=icon]:hidden">
-                  <p className="text-sm font-medium">Admin User</p>
-                  <p className="text-xs text-muted-foreground">admin@example.com</p>
+                  <p className="text-sm font-medium">{userProfile.name}</p>
+                  <p className="text-xs text-muted-foreground">{userProfile.email}</p>
                 </div>
               </Button>
             </DropdownMenuTrigger>
