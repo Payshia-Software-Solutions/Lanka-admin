@@ -37,15 +37,13 @@ export default function SignupPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          companyName,
-          name: fullName,
-          address,
-          country,
-          phone: phoneNumber,
-          email,
-          password,
-          // Assuming a default role for new signups
-          role: 'admin', 
+          name: companyName,
+          full_name: fullName,
+          address: address,
+          country: country,
+          phone_number: phoneNumber,
+          email: email,
+          password: password,
         }),
       });
 
