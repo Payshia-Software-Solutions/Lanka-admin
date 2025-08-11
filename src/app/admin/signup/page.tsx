@@ -40,7 +40,11 @@ export default function SignupPage() {
         body: JSON.stringify({ name: companyName }),
       });
 
-      const companyData = await companyResponse.json();
+      const companyResponseText = await companyResponse.text();
+      if (!companyResponseText) {
+        throw new Error("Company creation returned an empty response. Please ensure the backend returns the new company's JSON object.");
+      }
+      const companyData = JSON.parse(companyResponseText);
 
       if (!companyResponse.ok) {
         throw new Error(companyData.message || companyData.error || 'Failed to create company.');
