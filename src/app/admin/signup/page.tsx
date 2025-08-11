@@ -31,66 +31,33 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Step 1: Create the company first
-      const companyResponse = await fetch('http://localhost/travel_web_server/companies', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: companyName }),
-      });
-
-      if (!companyResponse.ok) {
-        // Try to get an error message from the response, but don't assume it's JSON
-        const errorText = await companyResponse.text();
-        let errorMessage = 'Failed to create company.';
-        try {
-            const errorJson = JSON.parse(errorText);
-            errorMessage = errorJson.message || errorJson.error || errorMessage;
-        } catch (e) {
-            // It's not JSON, so use the text directly if it's not too long
-            if (errorText.length > 0 && errorText.length < 100) {
-              errorMessage = errorText;
-            }
-        }
-        throw new Error(errorMessage);
-      }
-      
-      // Since the response might be empty, we can't reliably get the ID from it.
-      // The backend should create the user with the correct company association.
-      // This is a workaround for the empty response issue.
-      // Ideally, the backend should return the created company with its ID.
-
-      // Step 2: Create the user. The backend will need to find the company created above.
-      // This assumes the backend handles the association.
-      const userResponse = await fetch('http://localhost/travel_web_server/users', {
+      const response = await fetch('http://localhost/travel_web_server/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          // The backend will need a way to associate this user with the company just created.
-          // Sending company_name again, assuming the backend can use it.
-          company_name: companyName,
+          company_name: companyName, // The backend's CompanyController will use this
           full_name: fullName,
           address: address,
           country: country,
           phone_number: phoneNumber,
           email: email,
           password: password,
-          role: 'admin',
+          role: 'admin', // Hardcoded role for this signup form
         }),
       });
 
-      if (userResponse.ok) {
+      if (response.ok) {
         toast({
           title: "Signup Successful!",
           description: "Your account has been created. Please log in.",
         });
         router.push('/admin/login');
       } else {
-        const errorText = await userResponse.text();
-        let errorMessage = 'Failed to create user.';
+        // Try to get a meaningful error message from the backend response
+        const errorText = await response.text();
+        let errorMessage = 'An unknown error occurred during signup.';
         try {
             const errorJson = JSON.parse(errorText);
             errorMessage = errorJson.message || errorJson.error || errorMessage;
