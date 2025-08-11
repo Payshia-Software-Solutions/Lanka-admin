@@ -31,7 +31,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      // Step 1: Create the company
+      // Step 1: Create the company first
       const companyResponse = await fetch('http://localhost/travel_web_server/companies', {
         method: 'POST',
         headers: {
