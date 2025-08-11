@@ -1,3 +1,4 @@
+
 "use client";
 
 import Link from 'next/link';
@@ -8,30 +9,54 @@ import { Label } from "@/components/ui/label";
 import { useState, type FormEvent } from 'react';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
+import { Loader2 } from 'lucide-react';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
   const { toast } = useToast();
 
-  const handleSubmit = (event: FormEvent) => {
+  const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
-    
-    // Hardcoded login credentials
-    if (email === 'admin@example.com' && password === 'admin123') {
-      toast({
-        title: "Login Successful",
-        description: "Welcome back! Redirecting to dashboard...",
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost/travel_web_server/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email, password }),
       });
-      // On successful login, redirect to dashboard
-      router.push('/admin/dashboard');
-    } else {
-      toast({
+
+      const data = await response.json();
+
+      if (response.ok) {
+        toast({
+          title: "Login Successful",
+          description: "Welcome back! Redirecting to dashboard...",
+        });
+        // On successful login, you might want to store a token from the response
+        // e.g., localStorage.setItem('authToken', data.token);
+        router.push('/admin/dashboard');
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Login Failed",
+          description: data.message || "Invalid email or password. Please try again.",
+        });
+      }
+    } catch (error) {
+       console.error('Login fetch error:', error);
+       toast({
         variant: "destructive",
-        title: "Login Failed",
-        description: "Invalid email or password. Please try again.",
+        title: "Network Error",
+        description: "Could not connect to the server. Please check your connection and try again.",
       });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -55,6 +80,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="text-base"
+                disabled={isLoading}
               />
             </div>
             <div className="space-y-2">
@@ -72,10 +98,12 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 className="text-base"
+                disabled={isLoading}
               />
             </div>
-            <Button type="submit" className="w-full text-lg py-3">
-              Login
+            <Button type="submit" className="w-full text-lg py-3" disabled={isLoading}>
+              {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {isLoading ? "Logging in..." : "Login"}
             </Button>
           </form>
           <div className="mt-6 text-center text-sm">
