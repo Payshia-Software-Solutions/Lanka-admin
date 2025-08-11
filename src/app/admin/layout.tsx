@@ -83,8 +83,8 @@ export default function AdminLayout({ children }: { children: ReactNode }) {
     router.push('/admin/login');
   };
 
-  // Do not render layout for login page
-  if (pathname === '/admin/login') {
+  // Do not render layout for login or signup pages
+  if (pathname === '/admin/login' || pathname === '/admin/signup') {
     return <>{children}</>;
   }
 
