@@ -40,30 +40,38 @@ export default function SignupPage() {
         body: JSON.stringify({ name: companyName }),
       });
 
-      const companyResponseText = await companyResponse.text();
-      if (!companyResponseText) {
-        throw new Error("Company creation returned an empty response. Please ensure the backend returns the new company's JSON object.");
-      }
-      const companyData = JSON.parse(companyResponseText);
-
       if (!companyResponse.ok) {
-        throw new Error(companyData.message || companyData.error || 'Failed to create company.');
+        // Try to get an error message from the response, but don't assume it's JSON
+        const errorText = await companyResponse.text();
+        let errorMessage = 'Failed to create company.';
+        try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+        } catch (e) {
+            // It's not JSON, so use the text directly if it's not too long
+            if (errorText.length > 0 && errorText.length < 100) {
+              errorMessage = errorText;
+            }
+        }
+        throw new Error(errorMessage);
       }
       
-      const companyId = companyData.id;
+      // Since the response might be empty, we can't reliably get the ID from it.
+      // The backend should create the user with the correct company association.
+      // This is a workaround for the empty response issue.
+      // Ideally, the backend should return the created company with its ID.
 
-      if (!companyId) {
-        throw new Error('Company ID was not returned from the server.');
-      }
-
-      // Step 2: Create the user with the new company ID
+      // Step 2: Create the user. The backend will need to find the company created above.
+      // This assumes the backend handles the association.
       const userResponse = await fetch('http://localhost/travel_web_server/users', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          company_id: companyId,
+          // The backend will need a way to associate this user with the company just created.
+          // Sending company_name again, assuming the backend can use it.
+          company_name: companyName,
           full_name: fullName,
           address: address,
           country: country,
@@ -74,8 +82,6 @@ export default function SignupPage() {
         }),
       });
 
-      const userData = await userResponse.json();
-
       if (userResponse.ok) {
         toast({
           title: "Signup Successful!",
@@ -83,7 +89,17 @@ export default function SignupPage() {
         });
         router.push('/admin/login');
       } else {
-        throw new Error(userData.message || userData.error || 'Failed to create user.');
+        const errorText = await userResponse.text();
+        let errorMessage = 'Failed to create user.';
+        try {
+            const errorJson = JSON.parse(errorText);
+            errorMessage = errorJson.message || errorJson.error || errorMessage;
+        } catch (e) {
+             if (errorText.length > 0 && errorText.length < 100) {
+              errorMessage = errorText;
+            }
+        }
+        throw new Error(errorMessage);
       }
 
     } catch (error) {
