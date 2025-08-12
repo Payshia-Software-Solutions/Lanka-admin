@@ -30,10 +30,8 @@ import {
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Globe, Loader2 } from "lucide-react";
 import type { Destination } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
-import { getInitialDestinations } from "@/lib/destination-data";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
-const LOCAL_STORAGE_DESTINATIONS_KEY = "LANKA_ADMIN_DESTINATIONS";
 
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -41,72 +39,92 @@ export default function DestinationsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    setIsLoading(true);
-    if (typeof window !== 'undefined') {
-      let companyId: string | null = null;
-      const storedUser = localStorage.getItem('loggedInUser');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          if(parsedUser.companyId) {
-            companyId = parsedUser.companyId.toString();
+    const fetchAndFilterDestinations = async () => {
+      setIsLoading(true);
+      try {
+        // Fetch all destinations from the backend
+        const response = await fetch('http://localhost/travel_web_server/destinations');
+        if (!response.ok) {
+          throw new Error(`Failed to fetch destinations. Status: ${response.status}`);
+        }
+        
+        const allDestinations = await response.json();
+        if (!Array.isArray(allDestinations)) {
+            // Handle case where API returns an error object like { "error": "..." }
+            console.error("Fetched data is not an array:", allDestinations);
+            throw new Error("Received invalid data from server.");
+        }
+
+        // Get companyId from logged-in user in localStorage
+        let companyId: string | null = null;
+        if (typeof window !== 'undefined') {
+          const storedUser = localStorage.getItem('loggedInUser');
+          if (storedUser) {
+            try {
+              const parsedUser = JSON.parse(storedUser);
+              if (parsedUser.company_id) {
+                companyId = parsedUser.company_id.toString();
+              }
+            } catch (error) {
+              console.error("Failed to parse user from localStorage", error);
+            }
           }
-        } catch (error) {
-          console.error("Failed to parse user from localStorage", error);
         }
-      }
 
-      const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
-      let allDestinations: Destination[] = [];
-      if (storedDestinationsRaw) {
-        try {
-          allDestinations = JSON.parse(storedDestinationsRaw);
-        } catch (error) {
-          console.error("Error parsing destinations from localStorage:", error);
-          allDestinations = getInitialDestinations();
-          localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(allDestinations));
+        // Filter destinations based on companyId
+        if (companyId) {
+          const filteredDestinations = allDestinations.filter(
+            (dest: any) => dest.company_id && dest.company_id.toString() === companyId
+          );
+          setDestinations(filteredDestinations);
+        } else {
+          setDestinations([]);
+          console.warn("No companyId found for logged in user. No destinations will be shown.");
         }
-      } else {
-        allDestinations = getInitialDestinations();
-        localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(allDestinations));
+
+      } catch (error) {
+        console.error("Error fetching destinations:", error);
+        toast({
+          variant: "destructive",
+          title: "Failed to load destinations",
+          description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
+      } finally {
+        setIsLoading(false);
       }
+    };
 
-      if (companyId) {
-        const filteredDestinations = allDestinations.filter(
-          (dest) => dest.websiteId === companyId
-        );
-        setDestinations(filteredDestinations);
-      } else {
-        // Fallback or handle case where companyId is not found
-        setDestinations([]);
-         console.warn("No companyId found for logged in user. No destinations will be shown.");
-      }
-    }
-    setIsLoading(false);
-  }, []);
+    fetchAndFilterDestinations();
+  }, [toast]);
 
-  const handleDeleteDestination = (destinationId: string) => {
-    // Note: this deletion logic works on the complete destinations list in localStorage
-    // to avoid re-introducing deleted items for other users of the same company.
-    if (typeof window !== 'undefined') {
-        const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
-        if (storedDestinationsRaw) {
-            let allDestinations = JSON.parse(storedDestinationsRaw);
-            const updatedAllDestinations = allDestinations.filter((dest: Destination) => dest.id !== destinationId);
-            localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(updatedAllDestinations));
-            
-            // Also update the currently displayed state
-            const updatedFilteredDestinations = destinations.filter((dest) => dest.id !== destinationId);
-            setDestinations(updatedFilteredDestinations);
+  const handleDeleteDestination = async (destinationId: string) => {
+    try {
+        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
+            method: 'DELETE',
+        });
 
+        if (response.ok || response.status === 204) { // 204 No Content is a success status for delete
+            setDestinations(destinations.filter((dest) => dest.id !== destinationId));
             toast({
                 title: "Destination Deleted",
-                description: `Destination has been successfully removed.`,
+                description: "The destination has been successfully removed.",
                 variant: "destructive"
             });
+        } else {
+            const errorData = await response.json().catch(() => ({ error: 'Failed to delete. The server sent an invalid response.' }));
+            throw new Error(errorData.error || 'Failed to delete destination.');
         }
+
+    } catch (error) {
+        console.error("Error deleting destination:", error);
+        toast({
+            variant: "destructive",
+            title: "Deletion Failed",
+            description: error instanceof Error ? error.message : "An unknown error occurred.",
+        });
     }
   };
+
 
   if (isLoading) {
     return (
@@ -162,7 +180,7 @@ export default function DestinationsPage() {
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Globe className="h-4 w-4 text-muted-foreground" />
-                        {destination.websiteId}
+                        {destination.company_id}
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
@@ -199,7 +217,7 @@ export default function DestinationsPage() {
                               </AlertDialogHeader>
                               <AlertDialogFooter>
                                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDeleteDestination(destination.id)} className="bg-destructive hover:bg-destructive/90">
+                                <AlertDialogAction onClick={() => handleDeleteDestination(destination.id.toString())} className="bg-destructive hover:bg-destructive/90">
                                   Yes, delete destination
                                 </AlertDialogAction>
                               </AlertDialogFooter>
@@ -214,7 +232,7 @@ export default function DestinationsPage() {
             </Table>
           ) : (
             <div className="text-center py-10 text-muted-foreground">
-              <p className="text-lg">No destinations found.</p>
+              <p className="text-lg">No destinations found for your company.</p>
               <p>Click "Add New Destination" to create one.</p>
             </div>
           )}

@@ -1,5 +1,13 @@
 
 
+// Represents one "Thing to Do" for a destination
+export interface ThingToDo {
+  title: string;
+  description: string;
+  imageUrl: string;
+  icon: string;
+}
+
 export interface Website {
   id: string;
   name: string;
@@ -15,17 +23,31 @@ export interface Website {
 }
 
 export interface Destination {
-  id: string;
+  id: string | number; // Allow number for new items from DB
   name: string;
   description: string;
-  location: string; // Could be GeoJSON string or specific format
-  images: string[];
-  websiteId: string;
-  website?: Website;
-  // SEO fields
+  location: string;
+  websiteId?: string; // This may not be on the object from the backend directly
+  company_id: string | number; // From backend
+  
+  // New detailed fields
+  hero_heading?: string;
+  hero_subheading?: string;
+  hero_bg_image_url?: string;
+  intro_heading?: string;
+  intro_image_url?: string;
+  gallery_image_urls?: string[];
+  things_to_do?: ThingToDo[];
+  nearby_attractions?: string[];
+  travel_tip_heading?: string;
+  travel_tip_icon?: string;
+  travel_tip_description?: string;
+  is_popular?: boolean;
+
+  // Compatibility with old structure if needed
+  images?: string[]; 
   metaTitle?: string;
   metaDescription?: string;
-  metaKeywords?: string[];
 }
 
 export type PackageStatus = 'Draft' | 'Published' | 'Archived';
