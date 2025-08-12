@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm, useFieldArray, type SubmitHandler } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -111,26 +111,10 @@ export default function NewDestinationPage() {
       travelTipIcon: "Star",
       travelTipDescription: "",
       name: "",
-      websiteId: "", // Will be set from localStorage
+      websiteId: "",
       location: "",
     },
   });
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const storedUser = localStorage.getItem('loggedInUser');
-      if (storedUser) {
-        try {
-          const parsedUser = JSON.parse(storedUser);
-          if (parsedUser.company_id) {
-            form.setValue('websiteId', parsedUser.company_id.toString());
-          }
-        } catch (error) {
-          console.error("Failed to parse user from localStorage", error);
-        }
-      }
-    }
-  }, [form]);
 
   const { fields: galleryFields, append: appendGallery, remove: removeGallery } = useFieldArray({
     control: form.control,
@@ -255,9 +239,9 @@ export default function NewDestinationPage() {
                     <FormItem>
                       <FormLabel>Website ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="Your Company ID" {...field} readOnly />
+                        <Input placeholder="Enter Company ID" {...field} />
                       </FormControl>
-                       <FormDescription>This is your company ID. It cannot be changed.</FormDescription>
+                       <FormDescription>Enter the ID of the company this destination belongs to.</FormDescription>
                       <FormMessage />
                     </FormItem>
                   )}
