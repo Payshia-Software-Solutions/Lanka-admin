@@ -122,8 +122,8 @@ export default function NewDestinationPage() {
       if (storedUser) {
         try {
           const parsedUser = JSON.parse(storedUser);
-          if (parsedUser.companyId) {
-            form.setValue('websiteId', parsedUser.companyId.toString());
+          if (parsedUser.company_id) {
+            form.setValue('websiteId', parsedUser.company_id.toString());
           }
         } catch (error) {
           console.error("Failed to parse user from localStorage", error);
@@ -255,7 +255,7 @@ export default function NewDestinationPage() {
                     <FormItem>
                       <FormLabel>Website ID</FormLabel>
                       <FormControl>
-                        <Input placeholder="e.g., 1" {...field} readOnly />
+                        <Input placeholder="Your Company ID" {...field} readOnly />
                       </FormControl>
                        <FormDescription>This is your company ID. It cannot be changed.</FormDescription>
                       <FormMessage />
@@ -561,6 +561,3 @@ export default function NewDestinationPage() {
     </div>
   );
 }
-
-    
-    
