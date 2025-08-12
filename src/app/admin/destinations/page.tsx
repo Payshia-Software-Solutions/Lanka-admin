@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -42,37 +43,69 @@ export default function DestinationsPage() {
   useEffect(() => {
     setIsLoading(true);
     if (typeof window !== 'undefined') {
+      let companyId: string | null = null;
+      const storedUser = localStorage.getItem('loggedInUser');
+      if (storedUser) {
+        try {
+          const parsedUser = JSON.parse(storedUser);
+          if(parsedUser.companyId) {
+            companyId = parsedUser.companyId.toString();
+          }
+        } catch (error) {
+          console.error("Failed to parse user from localStorage", error);
+        }
+      }
+
       const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
+      let allDestinations: Destination[] = [];
       if (storedDestinationsRaw) {
         try {
-          const storedDestinations = JSON.parse(storedDestinationsRaw);
-          setDestinations(storedDestinations);
+          allDestinations = JSON.parse(storedDestinationsRaw);
         } catch (error) {
           console.error("Error parsing destinations from localStorage:", error);
-          const initialData = getInitialDestinations();
-          setDestinations(initialData);
-          localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(initialData));
+          allDestinations = getInitialDestinations();
+          localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(allDestinations));
         }
       } else {
-        const initialData = getInitialDestinations();
-        setDestinations(initialData);
-        localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(initialData));
+        allDestinations = getInitialDestinations();
+        localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(allDestinations));
+      }
+
+      if (companyId) {
+        const filteredDestinations = allDestinations.filter(
+          (dest) => dest.websiteId === companyId
+        );
+        setDestinations(filteredDestinations);
+      } else {
+        // Fallback or handle case where companyId is not found
+        setDestinations([]);
+         console.warn("No companyId found for logged in user. No destinations will be shown.");
       }
     }
     setIsLoading(false);
   }, []);
 
   const handleDeleteDestination = (destinationId: string) => {
-    const updatedDestinations = destinations.filter((dest) => dest.id !== destinationId);
-    setDestinations(updatedDestinations);
+    // Note: this deletion logic works on the complete destinations list in localStorage
+    // to avoid re-introducing deleted items for other users of the same company.
     if (typeof window !== 'undefined') {
-      localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(updatedDestinations));
+        const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
+        if (storedDestinationsRaw) {
+            let allDestinations = JSON.parse(storedDestinationsRaw);
+            const updatedAllDestinations = allDestinations.filter((dest: Destination) => dest.id !== destinationId);
+            localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(updatedAllDestinations));
+            
+            // Also update the currently displayed state
+            const updatedFilteredDestinations = destinations.filter((dest) => dest.id !== destinationId);
+            setDestinations(updatedFilteredDestinations);
+
+            toast({
+                title: "Destination Deleted",
+                description: `Destination has been successfully removed.`,
+                variant: "destructive"
+            });
+        }
     }
-    toast({
-      title: "Destination Deleted",
-      description: `Destination has been successfully removed.`,
-      variant: "destructive"
-    });
   };
 
   if (isLoading) {
