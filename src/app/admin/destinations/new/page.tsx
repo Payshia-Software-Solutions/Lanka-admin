@@ -54,28 +54,29 @@ const thingToDoSchema = z.object({
 });
 
 const destinationSchema = z.object({
-  heroHeading: z.string().min(3, "Hero heading is required."),
-  heroSubheading: z.string().min(3, "Hero sub-heading is required."),
-  heroBgImageUrl: z.string().url("Please enter a valid background image URL."),
+  heroHeading: z.string().min(3, "Hero heading is required.").default(''),
+  heroSubheading: z.string().min(3, "Hero sub-heading is required.").default(''),
+  heroBgImageUrl: z.string().url("Please enter a valid background image URL.").default(''),
   
-  introHeading: z.string().min(3, "Intro heading is required."),
-  introDescription: z.string().min(10, "Intro description must be at least 10 characters."),
-  introImageUrl: z.string().url("Please enter a valid intro image URL."),
+  introHeading: z.string().min(3, "Intro heading is required.").default(''),
+  introDescription: z.string().min(10, "Intro description must be at least 10 characters.").default(''),
+  introImageUrl: z.string().url("Please enter a valid intro image URL.").default(''),
 
-  galleryImageUrls: z.array(z.object({ url: z.string().url("Please enter a valid URL.") })),
+  galleryImageUrls: z.array(z.object({ url: z.string().url("Please enter a valid URL.") })).default([]),
 
-  thingsToDo: z.array(thingToDoSchema),
+  thingsToDo: z.array(thingToDoSchema).default([]),
 
   nearbyAttractions: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
   
-  travelTipHeading: z.string().min(3, "Travel tip heading is required."),
-  travelTipIcon: z.string().min(1, "Please select an icon."),
-  travelTipDescription: z.string().min(10, "Travel tip description is required."),
+  travelTipHeading: z.string().min(3, "Travel tip heading is required.").default(''),
+  travelTipIcon: z.string().min(1, "Please select an icon.").default(''),
+  travelTipDescription: z.string().min(10, "Travel tip description is required.").default(''),
   
   // Also include original Destination fields
   name: z.string().min(3, "Name must be at least 3 characters long."),
   websiteId: z.string().min(1, "Website ID is required."),
   location: z.string().min(3, "Location is required."),
+  description: z.string().optional(), // for compatibility with existing type
 });
 
 type DestinationFormData = z.infer<typeof destinationSchema>;
@@ -143,43 +144,73 @@ export default function NewDestinationPage() {
 
   const handleSubmit = async (data: DestinationFormData) => {
     setIsSubmitting(true);
-    console.log("Form Data:", data);
     
-    // This is where you would connect to your backend.
-    // For now, we'll simulate saving to localStorage.
+    // Map form data to the expected API structure
+    const apiData = {
+        company_id: parseInt(data.websiteId, 10),
+        name: data.name,
+        hero_heading: data.heroHeading,
+        hero_subheading: data.heroSubheading,
+        hero_bg_image_url: data.heroBgImageUrl,
+        intro_heading: data.introHeading,
+        description: data.introDescription,
+        intro_image_url: data.introImageUrl,
+        location: data.location,
+        gallery_image_urls: data.galleryImageUrls.map(item => item.url),
+        things_to_do: data.thingsToDo,
+        nearby_attractions: data.nearbyAttractions,
+        travel_tip_heading: data.travelTipHeading,
+        travel_tip_icon: data.travelTipIcon,
+        travel_tip_description: data.travelTipDescription,
+        is_popular: true, // Defaulting to true as per example
+    };
+
     try {
-        if (typeof window !== 'undefined') {
-            const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
-            let destinations: Destination[] = [];
-            if (storedDestinationsRaw) {
-                destinations = JSON.parse(storedDestinationsRaw);
-            }
+        const response = await fetch('http://localhost/travel_web_server/destinations', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(apiData),
+        });
 
-            // Map your form data to the simple Destination type
-            const newDestination: Destination = {
-                id: `dest${Date.now()}`,
-                name: data.name,
-                description: data.introDescription,
-                location: data.location,
-                websiteId: data.websiteId,
-                images: [data.heroBgImageUrl, data.introImageUrl, ...data.galleryImageUrls.map(img => img.url)],
-            };
-            
-            destinations.push(newDestination);
-            localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(destinations));
-
+        if (response.ok) {
+            const newDestination = await response.json();
             toast({
-                title: "Destination Created",
-                description: `Destination "${data.name}" has been successfully created.`,
+                title: "Destination Created!",
+                description: `Successfully created "${newDestination.name}".`,
             });
+            // Optionally, update localStorage if you still want to use it as a cache
+            if (typeof window !== 'undefined') {
+                const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
+                let destinations: Destination[] = [];
+                if (storedDestinationsRaw) {
+                    destinations = JSON.parse(storedDestinationsRaw);
+                }
+                 const destinationForStorage: Destination = {
+                    id: newDestination.id.toString(),
+                    name: newDestination.name,
+                    description: newDestination.description,
+                    location: newDestination.location,
+                    websiteId: newDestination.company_id.toString(),
+                    images: [newDestination.hero_bg_image_url, newDestination.intro_image_url, ...newDestination.gallery_image_urls],
+                };
+                destinations.push(destinationForStorage);
+                localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(destinations));
+            }
             router.push("/admin/destinations");
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to create destination.');
         }
+
     } catch (error) {
-        console.error("Error creating destination:", error);
+        console.error("Destination creation error:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
         toast({
-            title: "Error",
-            description: "Could not create the destination. Please try again.",
             variant: "destructive",
+            title: "Creation Failed",
+            description: errorMessage,
         });
     } finally {
         setIsSubmitting(false);
@@ -530,3 +561,5 @@ export default function NewDestinationPage() {
     </div>
   );
 }
+
+    
