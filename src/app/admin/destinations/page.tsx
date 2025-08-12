@@ -98,24 +98,29 @@ export default function DestinationsPage() {
   }, [toast]);
 
   const handleDeleteDestination = async (destinationId: string) => {
+    const originalDestinations = [...destinations];
+    setDestinations(destinations.filter((dest) => dest.id.toString() !== destinationId));
+
     try {
         const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
             method: 'DELETE',
         });
 
         if (response.ok || response.status === 204) { // 204 No Content is a success status for delete
-            setDestinations(destinations.filter((dest) => dest.id.toString() !== destinationId));
             toast({
                 title: "Destination Deleted",
                 description: "The destination has been successfully removed.",
-                variant: "destructive"
             });
         } else {
             const errorData = await response.json().catch(() => ({ error: 'Failed to delete. The server sent an invalid response.' }));
+            // Revert state if delete failed
+            setDestinations(originalDestinations);
             throw new Error(errorData.error || 'Failed to delete destination.');
         }
 
     } catch (error) {
+        // Revert state if delete failed
+        setDestinations(originalDestinations);
         console.error("Error deleting destination:", error);
         toast({
             variant: "destructive",
@@ -241,5 +246,3 @@ export default function DestinationsPage() {
     </div>
   );
 }
-
-    

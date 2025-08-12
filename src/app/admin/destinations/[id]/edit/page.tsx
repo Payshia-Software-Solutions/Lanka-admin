@@ -3,91 +3,108 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { DestinationForm, type DestinationFormData } from "@/components/admin/DestinationForm";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Destination } from "@/lib/types";
-import { getInitialDestinations } from '@/lib/destination-data';
+import { DetailedDestinationForm, type DestinationFormData } from "@/components/admin/DetailedDestinationForm";
 
-const LOCAL_STORAGE_DESTINATIONS_KEY = "LANKA_ADMIN_DESTINATIONS";
- 
 export default function EditDestinationPage() {
   const params = useParams();
   const router = useRouter();
   const { toast } = useToast();
   const destinationId = params.id as string;
 
-  const [destination, setDestination] = useState<Destination | null | undefined>(undefined); 
+  const [destination, setDestination] = useState<Destination | null>(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
   useEffect(() => {
-    if (destinationId && typeof window !== 'undefined') {
+    if (!destinationId) return;
+
+    const fetchDestination = async () => {
       setIsLoadingData(true);
-      const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
-      let destinations: Destination[] = [];
-      if (storedDestinationsRaw) {
-         try {
-            destinations = JSON.parse(storedDestinationsRaw);
-        } catch (e) {
-            console.error("Failed to parse destinations from localStorage for edit", e);
-            destinations = getInitialDestinations(); // Fallback
-            localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(destinations));
+      try {
+        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`);
+        if (response.ok) {
+          const data = await response.json();
+          setDestination(data);
+        } else {
+          setDestination(null);
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to fetch destination data.",
+          });
         }
-      } else {
-        destinations = getInitialDestinations();
-        localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(destinations));
+      } catch (error) {
+        console.error("Error fetching destination data:", error);
+        setDestination(null);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "An error occurred while fetching destination data.",
+        });
+      } finally {
+        setIsLoadingData(false);
       }
-      
-      const foundDestination = destinations.find(d => d.id === destinationId);
-      setDestination(foundDestination || null);
-      setIsLoadingData(false);
-    }
-  }, [destinationId]);
+    };
+    
+    fetchDestination();
+  }, [destinationId, toast]);
 
   const handleSubmit = async (data: DestinationFormData) => {
     setIsSubmitting(true);
     
-    if (typeof window !== 'undefined' && destination) {
-        try {
-            const storedDestinationsRaw = localStorage.getItem(LOCAL_STORAGE_DESTINATIONS_KEY);
-            let destinations: Destination[] = [];
-            if (storedDestinationsRaw) {
-                 destinations = JSON.parse(storedDestinationsRaw);
-            }
+    const apiData = {
+        company_id: parseInt(data.websiteId, 10),
+        name: data.name,
+        hero_heading: data.heroHeading,
+        hero_subheading: data.heroSubheading,
+        hero_bg_image_url: data.heroBgImageUrl,
+        intro_heading: data.introHeading,
+        description: data.introDescription,
+        intro_image_url: data.introImageUrl,
+        location: data.location,
+        gallery_image_urls: data.galleryImageUrls.map(item => item.url),
+        things_to_do: data.thingsToDo,
+        nearby_attractions: data.nearbyAttractions,
+        travel_tip_heading: data.travelTipHeading,
+        travel_tip_icon: data.travelTipIcon,
+        travel_tip_description: data.travelTipDescription,
+        is_popular: data.is_popular,
+    };
 
-            const destinationIndex = destinations.findIndex(d => d.id === destinationId);
-            if (destinationIndex !== -1) {
-                destinations[destinationIndex] = {
-                ...destinations[destinationIndex],
-                ...data,
-                images: data.images || [],
-                };
-                localStorage.setItem(LOCAL_STORAGE_DESTINATIONS_KEY, JSON.stringify(destinations));
-                toast({
-                title: "Destination Updated",
-                description: `Destination "${data.name}" has been successfully updated.`,
-                });
-                router.push("/admin/destinations");
-            } else {
-                toast({
-                    title: "Error",
-                    description: "Could not find the destination to update.",
-                    variant: "destructive",
-                });
-            }
-        } catch (error) {
-            console.error("Error updating destination:", error);
+    try {
+        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(apiData),
+        });
+
+        if (response.ok) {
             toast({
-                title: "Error",
-                description: "Could not update destination. Please try again.",
-                variant: "destructive",
+                title: "Destination Updated",
+                description: `Successfully updated "${apiData.name}".`,
             });
+            router.push("/admin/destinations");
+            router.refresh(); // To see the changes in the list
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to update destination.');
         }
+    } catch (error) {
+        console.error("Destination update error:", error);
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({
+            variant: "destructive",
+            title: "Update Failed",
+            description: errorMessage,
+        });
+    } finally {
+        setIsSubmitting(false);
     }
-    setIsSubmitting(false);
   };
 
   if (isLoadingData) {
@@ -99,7 +116,7 @@ export default function EditDestinationPage() {
     );
   }
 
-  if (destination === null) {
+  if (!destination) {
     return (
       <div className="space-y-6 text-center">
          <h1 className="text-2xl font-bold text-destructive">Destination Not Found</h1>
@@ -124,7 +141,12 @@ export default function EditDestinationPage() {
           <CardDescription>Update the information for this destination.</CardDescription>
         </CardHeader>
         <CardContent>
-          {destination && <DestinationForm initialData={destination} onSubmitForm={handleSubmit} isSubmitting={isSubmitting} />}
+          <DetailedDestinationForm 
+            initialData={destination} 
+            onSubmitForm={handleSubmit} 
+            isSubmitting={isSubmitting} 
+            isEditing={true}
+          />
         </CardContent>
       </Card>
     </div>
