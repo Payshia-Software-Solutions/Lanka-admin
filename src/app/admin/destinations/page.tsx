@@ -104,7 +104,7 @@ export default function DestinationsPage() {
         });
 
         if (response.ok || response.status === 204) { // 204 No Content is a success status for delete
-            setDestinations(destinations.filter((dest) => dest.id !== destinationId));
+            setDestinations(destinations.filter((dest) => dest.id.toString() !== destinationId));
             toast({
                 title: "Destination Deleted",
                 description: "The destination has been successfully removed.",
@@ -241,3 +241,5 @@ export default function DestinationsPage() {
     </div>
   );
 }
+
+    
