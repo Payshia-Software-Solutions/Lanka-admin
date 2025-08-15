@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
-import type { Package, Hotel, MealType } from "@/lib/types";
+import type { Package, Hotel, MealType, VehicleType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { getInitialPackages } from '@/lib/package-data';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -62,6 +62,12 @@ export default function PackagesPage() {
   const [isLoadingMealTypes, setIsLoadingMealTypes] = useState(true);
   const [newMealType, setNewMealType] = useState({ name: "", description: "" });
   const [isSubmittingMealType, setIsSubmittingMealType] = useState(false);
+  
+  // State for Vehicle Types
+  const [vehicleTypes, setVehicleTypes] = useState<VehicleType[]>([]);
+  const [isLoadingVehicleTypes, setIsLoadingVehicleTypes] = useState(true);
+  const [newVehicleTypeName, setNewVehicleTypeName] = useState("");
+  const [isSubmittingVehicleType, setIsSubmittingVehicleType] = useState(false);
 
   
   const companyId = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id : null;
@@ -176,6 +182,27 @@ export default function PackagesPage() {
       }
   };
 
+  const fetchVehicleTypes = async () => {
+      if (!companyId) return;
+      setIsLoadingVehicleTypes(true);
+      try {
+        const response = await fetch('http://localhost/travel_web_server/vehicle_types');
+        if (!response.ok) throw new Error("Failed to fetch vehicle types");
+        const allTypes = await response.json();
+        if (Array.isArray(allTypes)) {
+            const filteredTypes = allTypes.filter((type: VehicleType) => type.company_id.toString() === companyId.toString());
+            setVehicleTypes(filteredTypes);
+        } else {
+            setVehicleTypes([]);
+        }
+      } catch (error) {
+        console.error("Error fetching vehicle types:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load vehicle types." });
+      } finally {
+        setIsLoadingVehicleTypes(false);
+      }
+  };
+
 
   useEffect(() => {
     if (companyId) {
@@ -183,6 +210,7 @@ export default function PackagesPage() {
         fetchActivities();
         fetchHotels();
         fetchMealTypes();
+        fetchVehicleTypes();
     }
   }, [companyId]);
 
@@ -375,6 +403,50 @@ export default function PackagesPage() {
         } else {
              const errorData = await response.json();
             throw new Error(errorData.error || "Failed to delete meal type.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+    }
+  }
+
+   const handleAddVehicleType = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!newVehicleTypeName.trim() || !companyId) return;
+    setIsSubmittingVehicleType(true);
+    try {
+        const response = await fetch('http://localhost/travel_web_server/vehicle_types', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newVehicleTypeName, company_id: companyId }),
+        });
+        if (response.ok) {
+            toast({ title: "Success", description: "Vehicle type added." });
+            setNewVehicleTypeName("");
+            fetchVehicleTypes(); // Refresh list
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to add vehicle type.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+    } finally {
+        setIsSubmittingVehicleType(false);
+    }
+  }
+
+  const handleDeleteVehicleType = async (id: number) => {
+    try {
+        const response = await fetch(`http://localhost/travel_web_server/vehicle_types/${id}`, {
+            method: 'DELETE',
+        });
+        if (response.ok || response.status === 204) {
+             toast({ title: "Success", description: "Vehicle type deleted." });
+             fetchVehicleTypes(); // Refresh list
+        } else {
+             const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to delete vehicle type.");
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -729,6 +801,67 @@ export default function PackagesPage() {
                 </ul>
                 ) : (
                 <p className="text-center text-sm text-muted-foreground py-4">No meal types added yet.</p>
+            )}
+          </CardContent>
+        </Card>
+        
+      <Card>
+          <CardHeader>
+            <CardTitle>Manage Vehicle Types</CardTitle>
+            <CardDescription>Add or remove vehicle types available for tours.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddVehicleType} className="flex items-center gap-2 mb-4">
+              <div className="flex-grow">
+                <Label htmlFor="vehicle-type-name" className="sr-only">Vehicle Type Name</Label>
+                <Input 
+                  id="vehicle-type-name"
+                  placeholder="e.g., Car, Van, Bus" 
+                  value={newVehicleTypeName}
+                  onChange={(e) => setNewVehicleTypeName(e.target.value)}
+                  disabled={isSubmittingVehicleType}
+                />
+              </div>
+              <Button type="submit" disabled={isSubmittingVehicleType}>
+                {isSubmittingVehicleType ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                <span className="ml-2 hidden sm:inline">Add Type</span>
+              </Button>
+            </form>
+            {isLoadingVehicleTypes ? (
+              <div className="flex justify-center items-center h-24">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : vehicleTypes.length > 0 ? (
+              <ul className="space-y-2">
+                {vehicleTypes.map(type => (
+                  <li key={type.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-md">
+                    <span className="font-medium text-sm">{type.name}</span>
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the "{type.name}" vehicle type. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteVehicleType(type.id)} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-4">No vehicle types added yet.</p>
             )}
           </CardContent>
         </Card>
