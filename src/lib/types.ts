@@ -136,3 +136,12 @@ export interface User {
   // Password typically not sent to client
 }
 
+export interface Hotel {
+  id: number;
+  company_id: number;
+  accommodation_type_id: number;
+  name: string;
+  location: string;
+  created_at: string;
+  updated_at: string;
+}
