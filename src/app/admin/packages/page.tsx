@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
-import type { Package, Hotel, MealType, VehicleType } from "@/lib/types";
+import type { Package, Hotel, MealType, VehicleType, Destination } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { getInitialPackages } from '@/lib/package-data';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -54,8 +54,12 @@ export default function PackagesPage() {
   // State for Hotels
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoadingHotels, setIsLoadingHotels] = useState(true);
-  const [newHotel, setNewHotel] = useState({ name: "", location: "", accommodation_type_id: "" });
+  const [newHotel, setNewHotel] = useState({ name: "", location: "", accommodation_type_id: "", destination_id: "" });
   const [isSubmittingHotel, setIsSubmittingHotel] = useState(false);
+  
+  // State for Destinations
+  const [destinations, setDestinations] = useState<Destination[]>([]);
+  const [isLoadingDestinations, setIsLoadingDestinations] = useState(true);
 
   // State for Meal Types
   const [mealTypes, setMealTypes] = useState<MealType[]>([]);
@@ -140,6 +144,28 @@ export default function PackagesPage() {
       }
   };
 
+  const fetchDestinations = async () => {
+      if (!companyId) return;
+      setIsLoadingDestinations(true);
+      try {
+        const response = await fetch('http://localhost/travel_web_server/destinations');
+        if (!response.ok) throw new Error("Failed to fetch destinations");
+        const allDestinations = await response.json();
+        if (Array.isArray(allDestinations)) {
+            const filtered = allDestinations.filter((dest: Destination) => dest.company_id.toString() === companyId.toString());
+            setDestinations(filtered);
+        } else {
+            setDestinations([]);
+        }
+      } catch (error) {
+        console.error("Error fetching destinations:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load destinations." });
+      } finally {
+        setIsLoadingDestinations(false);
+      }
+  };
+
+
   const fetchHotels = async () => {
       if (!companyId) return;
       setIsLoadingHotels(true);
@@ -211,6 +237,7 @@ export default function PackagesPage() {
         fetchHotels();
         fetchMealTypes();
         fetchVehicleTypes();
+        fetchDestinations();
     }
   }, [companyId]);
 
@@ -320,7 +347,7 @@ export default function PackagesPage() {
 
   const handleAddHotel = async (event: FormEvent) => {
     event.preventDefault();
-    if (!newHotel.name.trim() || !newHotel.accommodation_type_id || !companyId) return;
+    if (!newHotel.name.trim() || !newHotel.accommodation_type_id || !newHotel.destination_id || !companyId) return;
     setIsSubmittingHotel(true);
     try {
         const response = await fetch('http://localhost/travel_web_server/hotels', {
@@ -329,12 +356,13 @@ export default function PackagesPage() {
             body: JSON.stringify({ 
                 ...newHotel, 
                 company_id: companyId,
-                accommodation_type_id: parseInt(newHotel.accommodation_type_id, 10)
+                accommodation_type_id: parseInt(newHotel.accommodation_type_id, 10),
+                destination_id: parseInt(newHotel.destination_id, 10),
             }),
         });
         if (response.ok) {
             toast({ title: "Success", description: "Hotel added." });
-            setNewHotel({ name: "", location: "", accommodation_type_id: "" });
+            setNewHotel({ name: "", location: "", accommodation_type_id: "", destination_id: "" });
             fetchHotels(); // Refresh list
         } else {
             const errorData = await response.json();
@@ -665,24 +693,45 @@ export default function PackagesPage() {
                     />
                  </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="accommodation-type">Accommodation Type</Label>
-                 <Select
-                    value={newHotel.accommodation_type_id}
-                    onValueChange={(value) => setNewHotel({ ...newHotel, accommodation_type_id: value })}
-                    disabled={isSubmittingHotel || isLoadingAccommodation}
-                >
-                    <SelectTrigger id="accommodation-type">
-                        <SelectValue placeholder="Select an accommodation type" />
-                    </SelectTrigger>
-                    <SelectContent>
-                        {accommodationTypes.map(type => (
-                            <SelectItem key={type.id} value={type.id.toString()}>
-                                {type.name}
-                            </SelectItem>
-                        ))}
-                    </SelectContent>
-                </Select>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="accommodation-type">Accommodation Type</Label>
+                  <Select
+                      value={newHotel.accommodation_type_id}
+                      onValueChange={(value) => setNewHotel({ ...newHotel, accommodation_type_id: value })}
+                      disabled={isSubmittingHotel || isLoadingAccommodation}
+                  >
+                      <SelectTrigger id="accommodation-type">
+                          <SelectValue placeholder="Select an accommodation type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {accommodationTypes.map(type => (
+                              <SelectItem key={type.id} value={type.id.toString()}>
+                                  {type.name}
+                              </SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="destination">Destination</Label>
+                  <Select
+                      value={newHotel.destination_id}
+                      onValueChange={(value) => setNewHotel({ ...newHotel, destination_id: value })}
+                      disabled={isSubmittingHotel || isLoadingDestinations}
+                  >
+                      <SelectTrigger id="destination">
+                          <SelectValue placeholder="Select a destination" />
+                      </SelectTrigger>
+                      <SelectContent>
+                          {destinations.map(dest => (
+                              <SelectItem key={dest.id} value={dest.id.toString()}>
+                                  {dest.name}
+                              </SelectItem>
+                          ))}
+                      </SelectContent>
+                  </Select>
+                </div>
               </div>
               <Button type="submit" disabled={isSubmittingHotel}>
                 {isSubmittingHotel ? <Loader2 className="animate-spin" /> : <PlusCircle />}
@@ -695,35 +744,41 @@ export default function PackagesPage() {
                 </div>
                 ) : hotels.length > 0 ? (
                 <ul className="space-y-2">
-                    {hotels.map(hotel => (
-                    <li key={hotel.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                        <div>
-                        <h4 className="font-semibold text-sm">{hotel.name}</h4>
-                        <p className="text-xs text-muted-foreground">{hotel.location} - {accommodationTypes.find(t => t.id === hotel.accommodation_type_id)?.name || 'N/A'}</p>
-                        </div>
-                        <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
-                            <Trash2 className="h-4 w-4" />
-                            </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                            <AlertDialogHeader>
-                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                            <AlertDialogDescription>
-                                This will permanently delete the "{hotel.name}" hotel. This action cannot be undone.
-                            </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                            <AlertDialogCancel>Cancel</AlertDialogCancel>
-                            <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)} className="bg-destructive hover:bg-destructive/90">
-                                Yes, delete
-                            </AlertDialogAction>
-                            </AlertDialogFooter>
-                        </AlertDialogContent>
-                        </AlertDialog>
-                    </li>
-                    ))}
+                    {hotels.map(hotel => {
+                      const destinationName = destinations.find(d => d.id === hotel.destination_id)?.name;
+                      const accommodationTypeName = accommodationTypes.find(t => t.id === hotel.accommodation_type_id)?.name;
+                      return (
+                        <li key={hotel.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                          <div>
+                            <h4 className="font-semibold text-sm">{hotel.name}</h4>
+                            <p className="text-xs text-muted-foreground">
+                                {destinationName || 'Unknown Destination'} - {accommodationTypeName || 'N/A'}
+                            </p>
+                          </div>
+                          <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
+                              <Trash2 className="h-4 w-4" />
+                              </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                              <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                  This will permanently delete the "{hotel.name}" hotel. This action cannot be undone.
+                              </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                              <AlertDialogCancel>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={() => handleDeleteHotel(hotel.id)} className="bg-destructive hover:bg-destructive/90">
+                                  Yes, delete
+                              </AlertDialogAction>
+                              </AlertDialogFooter>
+                          </AlertDialogContent>
+                          </AlertDialog>
+                        </li>
+                      );
+                    })}
                 </ul>
                 ) : (
                 <p className="text-center text-sm text-muted-foreground py-4">No hotels added yet.</p>
