@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PlusCircle, Trash2, Loader2 } from "lucide-react";
-import type { Package, Hotel } from "@/lib/types";
+import type { Package, Hotel, MealType } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { getInitialPackages } from '@/lib/package-data';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -56,6 +56,13 @@ export default function PackagesPage() {
   const [isLoadingHotels, setIsLoadingHotels] = useState(true);
   const [newHotel, setNewHotel] = useState({ name: "", location: "", accommodation_type_id: "" });
   const [isSubmittingHotel, setIsSubmittingHotel] = useState(false);
+
+  // State for Meal Types
+  const [mealTypes, setMealTypes] = useState<MealType[]>([]);
+  const [isLoadingMealTypes, setIsLoadingMealTypes] = useState(true);
+  const [newMealType, setNewMealType] = useState({ name: "", description: "" });
+  const [isSubmittingMealType, setIsSubmittingMealType] = useState(false);
+
   
   const companyId = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id : null;
 
@@ -148,12 +155,34 @@ export default function PackagesPage() {
       }
   };
 
+  const fetchMealTypes = async () => {
+      if (!companyId) return;
+      setIsLoadingMealTypes(true);
+      try {
+        const response = await fetch('http://localhost/travel_web_server/meal_types');
+        if (!response.ok) throw new Error("Failed to fetch meal types");
+        const allTypes = await response.json();
+        if (Array.isArray(allTypes)) {
+            const filteredTypes = allTypes.filter((type: MealType) => type.company_id.toString() === companyId.toString());
+            setMealTypes(filteredTypes);
+        } else {
+            setMealTypes([]);
+        }
+      } catch (error) {
+        console.error("Error fetching meal types:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load meal types." });
+      } finally {
+        setIsLoadingMealTypes(false);
+      }
+  };
+
 
   useEffect(() => {
     if (companyId) {
         fetchAccommodationTypes();
         fetchActivities();
         fetchHotels();
+        fetchMealTypes();
     }
   }, [companyId]);
 
@@ -302,6 +331,50 @@ export default function PackagesPage() {
         } else {
              const errorData = await response.json();
             throw new Error(errorData.error || "Failed to delete hotel.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+    }
+  }
+
+  const handleAddMealType = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!newMealType.name.trim() || !companyId) return;
+    setIsSubmittingMealType(true);
+    try {
+        const response = await fetch('http://localhost/travel_web_server/meal_types', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ ...newMealType, company_id: companyId }),
+        });
+        if (response.ok) {
+            toast({ title: "Success", description: "Meal type added." });
+            setNewMealType({ name: "", description: "" });
+            fetchMealTypes(); // Refresh list
+        } else {
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to add meal type.");
+        }
+    } catch (error) {
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
+    } finally {
+        setIsSubmittingMealType(false);
+    }
+  }
+
+  const handleDeleteMealType = async (id: number) => {
+    try {
+        const response = await fetch(`http://localhost/travel_web_server/meal_types/${id}`, {
+            method: 'DELETE',
+        });
+        if (response.ok || response.status === 204) {
+             toast({ title: "Success", description: "Meal type deleted." });
+             fetchMealTypes(); // Refresh list
+        } else {
+             const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to delete meal type.");
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -586,6 +659,79 @@ export default function PackagesPage() {
           </CardContent>
         </Card>
 
+      <Card>
+          <CardHeader>
+            <CardTitle>Manage Meal Types</CardTitle>
+            <CardDescription>Add or remove meal types that can be included in packages.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddMealType} className="space-y-4 mb-6 pb-6 border-b">
+              <div className="space-y-2">
+                <Label htmlFor="meal-type-name">Meal Type Name</Label>
+                <Input 
+                  id="meal-type-name"
+                  placeholder="e.g., Full Board, Half Board"
+                  value={newMealType.name}
+                  onChange={(e) => setNewMealType({ ...newMealType, name: e.target.value })}
+                  disabled={isSubmittingMealType}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="meal-type-description">Description</Label>
+                <Textarea 
+                  id="meal-type-description"
+                  placeholder="A brief description of the meal type."
+                  value={newMealType.description}
+                  onChange={(e) => setNewMealType({ ...newMealType, description: e.target.value })}
+                  disabled={isSubmittingMealType}
+                />
+              </div>
+              <Button type="submit" disabled={isSubmittingMealType}>
+                {isSubmittingMealType ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                <span className="ml-2">Add Meal Type</span>
+              </Button>
+            </form>
+            {isLoadingMealTypes ? (
+                <div className="flex justify-center items-center h-24">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                </div>
+                ) : mealTypes.length > 0 ? (
+                <ul className="space-y-2">
+                    {mealTypes.map(meal => (
+                    <li key={meal.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
+                        <div>
+                        <h4 className="font-semibold text-sm">{meal.name}</h4>
+                        <p className="text-xs text-muted-foreground">{meal.description}</p>
+                        </div>
+                        <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
+                            <Trash2 className="h-4 w-4" />
+                            </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                            <AlertDialogHeader>
+                            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                                This will permanently delete the "{meal.name}" meal type. This action cannot be undone.
+                            </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction onClick={() => handleDeleteMealType(meal.id)} className="bg-destructive hover:bg-destructive/90">
+                                Yes, delete
+                            </AlertDialogAction>
+                            </AlertDialogFooter>
+                        </AlertDialogContent>
+                        </AlertDialog>
+                    </li>
+                    ))}
+                </ul>
+                ) : (
+                <p className="text-center text-sm text-muted-foreground py-4">No meal types added yet.</p>
+            )}
+          </CardContent>
+        </Card>
     </div>
   );
 }

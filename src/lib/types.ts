@@ -145,3 +145,12 @@ export interface Hotel {
   created_at: string;
   updated_at: string;
 }
+
+export interface MealType {
+  id: number;
+  company_id: number;
+  name: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
