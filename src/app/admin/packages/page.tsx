@@ -3,19 +3,16 @@
 
 import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, DollarSign, CalendarDays, Loader2 } from "lucide-react";
-import type { Package, PackageStatus } from "@/lib/types";
-import { format } from 'date-fns';
+import { PlusCircle, Trash2, Loader2 } from "lucide-react";
+import type { Package } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { getInitialPackages } from '@/lib/package-data';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+
 
 const LOCAL_STORAGE_PACKAGES_KEY = "LANKA_ADMIN_PACKAGES";
 
@@ -24,13 +21,6 @@ interface AccommodationType {
     company_id: number;
     name: string;
 }
-
-const statusColors: Record<PackageStatus, string> = {
-  Draft: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
-  Published: "bg-green-500/20 text-green-700 border-green-500/30",
-  Archived: "bg-neutral-500/20 text-neutral-700 border-neutral-500/30",
-};
-
 
 export default function PackagesPage() {
   const [packages, setPackages] = useState<Package[]>([]);
@@ -93,8 +83,10 @@ export default function PackagesPage() {
   };
 
   useEffect(() => {
-    fetchAccommodationTypes();
-  }, [companyId]); // Refetch if companyId changes
+    if (companyId) {
+        fetchAccommodationTypes();
+    }
+  }, [companyId, toast]);
 
 
   const handleDeletePackage = (packageId: string) => {
@@ -126,11 +118,12 @@ export default function PackagesPage() {
             setNewAccommodationName("");
             fetchAccommodationTypes(); // Refresh list
         } else {
-            throw new Error("Failed to add accommodation type.");
+            const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to add accommodation type.");
         }
     } catch (error) {
-        console.error("Error adding accommodation type:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not add accommodation type." });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
     } finally {
         setIsSubmittingAccommodation(false);
     }
@@ -145,11 +138,12 @@ export default function PackagesPage() {
              toast({ title: "Success", description: "Accommodation type deleted." });
              fetchAccommodationTypes(); // Refresh list
         } else {
-            throw new Error("Failed to delete accommodation type.");
+             const errorData = await response.json();
+            throw new Error(errorData.error || "Failed to delete accommodation type.");
         }
     } catch (error) {
-        console.error("Error deleting accommodation type:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not delete accommodation type." });
+        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
+        toast({ variant: "destructive", title: "Error", description: errorMessage });
     }
   }
   
@@ -157,7 +151,7 @@ export default function PackagesPage() {
     return (
       <div className="flex justify-center items-center h-64">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Loading packages...</p>
+        <p className="ml-4 text-lg">Loading page data...</p>
       </div>
     );
   }
@@ -173,6 +167,71 @@ export default function PackagesPage() {
           </Link>
         </Button>
       </div>
+
+       <Card>
+          <CardHeader>
+            <CardTitle>Manage Accommodation Types</CardTitle>
+            <CardDescription>Add or remove accommodation types for your packages.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handleAddAccommodationType} className="flex items-center gap-2 mb-4">
+              <div className="flex-grow">
+                <Label htmlFor="accommodation-name" className="sr-only">Accommodation Name</Label>
+                <Input 
+                  id="accommodation-name"
+                  placeholder="e.g., Luxury Hotel, Boutique Villa" 
+                  value={newAccommodationName}
+                  onChange={(e) => setNewAccommodationName(e.target.value)}
+                  disabled={isSubmittingAccommodation}
+                />
+              </div>
+              <Button type="submit" disabled={isSubmittingAccommodation}>
+                {isSubmittingAccommodation ? <Loader2 className="animate-spin" /> : <PlusCircle />}
+                <span className="ml-2 hidden sm:inline">Add Type</span>
+              </Button>
+            </form>
+            {isLoadingAccommodation ? (
+              <div className="flex justify-center items-center h-24">
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+              </div>
+            ) : accommodationTypes.length > 0 ? (
+              <ul className="space-y-2">
+                {accommodationTypes.map(type => (
+                  <li key={type.id} className="flex items-center justify-between p-2 bg-secondary/50 rounded-md">
+                    <span className="font-medium text-sm">{type.name}</span>
+                    
+                    <AlertDialog>
+                      <AlertDialogTrigger asChild>
+                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </AlertDialogTrigger>
+                      <AlertDialogContent>
+                        <AlertDialogHeader>
+                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                          <AlertDialogDescription>
+                            This will permanently delete the "{type.name}" accommodation type. This action cannot be undone.
+                          </AlertDialogDescription>
+                        </AlertDialogHeader>
+                        <AlertDialogFooter>
+                          <AlertDialogCancel>Cancel</AlertDialogCancel>
+                          <AlertDialogAction onClick={() => handleDeleteAccommodationType(type.id)} className="bg-destructive hover:bg-destructive/90">
+                            Yes, delete
+                          </AlertDialogAction>
+                        </AlertDialogFooter>
+                      </AlertDialogContent>
+                    </AlertDialog>
+
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <p className="text-center text-sm text-muted-foreground py-4">No accommodation types added yet.</p>
+            )}
+          </CardContent>
+        </Card>
     </div>
   );
 }
+
+    
