@@ -1,14 +1,16 @@
 
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, type FormEvent } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { PlusCircle, MoreHorizontal, Edit, Trash2, Eye, DollarSign, CalendarDays, Loader2 } from "lucide-react";
 import type { Package, PackageStatus } from "@/lib/types";
 import { format } from 'date-fns';
@@ -16,6 +18,12 @@ import { useToast } from "@/hooks/use-toast";
 import { getInitialPackages } from '@/lib/package-data';
 
 const LOCAL_STORAGE_PACKAGES_KEY = "LANKA_ADMIN_PACKAGES";
+
+interface AccommodationType {
+    id: number;
+    company_id: number;
+    name: string;
+}
 
 const statusColors: Record<PackageStatus, string> = {
   Draft: "bg-yellow-500/20 text-yellow-700 border-yellow-500/30",
@@ -28,6 +36,15 @@ export default function PackagesPage() {
   const [packages, setPackages] = useState<Package[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+
+  // State for Accommodation Types
+  const [accommodationTypes, setAccommodationTypes] = useState<AccommodationType[]>([]);
+  const [isLoadingAccommodation, setIsLoadingAccommodation] = useState(true);
+  const [newAccommodationName, setNewAccommodationName] = useState("");
+  const [isSubmittingAccommodation, setIsSubmittingAccommodation] = useState(false);
+  
+  const companyId = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id : null;
+
 
   useEffect(() => {
     setIsLoading(true);
@@ -58,6 +75,28 @@ export default function PackagesPage() {
     setIsLoading(false);
   }, []);
 
+  const fetchAccommodationTypes = async () => {
+      if (!companyId) return;
+      setIsLoadingAccommodation(true);
+      try {
+        const response = await fetch('http://localhost/travel_web_server/accommodation_types');
+        if (!response.ok) throw new Error("Failed to fetch accommodation types");
+        const allTypes = await response.json();
+        const filteredTypes = allTypes.filter((type: AccommodationType) => type.company_id.toString() === companyId.toString());
+        setAccommodationTypes(filteredTypes);
+      } catch (error) {
+        console.error("Error fetching accommodation types:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not load accommodation types." });
+      } finally {
+        setIsLoadingAccommodation(false);
+      }
+  };
+
+  useEffect(() => {
+    fetchAccommodationTypes();
+  }, [companyId]); // Refetch if companyId changes
+
+
   const handleDeletePackage = (packageId: string) => {
     const updatedPackages = packages.filter((pkg) => pkg.id !== packageId);
     setPackages(updatedPackages);
@@ -70,6 +109,49 @@ export default function PackagesPage() {
       variant: "destructive"
     });
   };
+
+  const handleAddAccommodationType = async (event: FormEvent) => {
+    event.preventDefault();
+    if (!newAccommodationName.trim() || !companyId) return;
+
+    setIsSubmittingAccommodation(true);
+    try {
+        const response = await fetch('http://localhost/travel_web_server/accommodation_types', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name: newAccommodationName, company_id: companyId }),
+        });
+        if (response.ok) {
+            toast({ title: "Success", description: "Accommodation type added." });
+            setNewAccommodationName("");
+            fetchAccommodationTypes(); // Refresh list
+        } else {
+            throw new Error("Failed to add accommodation type.");
+        }
+    } catch (error) {
+        console.error("Error adding accommodation type:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not add accommodation type." });
+    } finally {
+        setIsSubmittingAccommodation(false);
+    }
+  }
+
+  const handleDeleteAccommodationType = async (id: number) => {
+    try {
+        const response = await fetch(`http://localhost/travel_web_server/accommodation_types/${id}`, {
+            method: 'DELETE',
+        });
+        if (response.ok || response.status === 204) {
+             toast({ title: "Success", description: "Accommodation type deleted." });
+             fetchAccommodationTypes(); // Refresh list
+        } else {
+            throw new Error("Failed to delete accommodation type.");
+        }
+    } catch (error) {
+        console.error("Error deleting accommodation type:", error);
+        toast({ variant: "destructive", title: "Error", description: "Could not delete accommodation type." });
+    }
+  }
   
   if (isLoading) {
     return (
@@ -91,6 +173,7 @@ export default function PackagesPage() {
           </Link>
         </Button>
       </div>
+
       <Card className="shadow-lg">
         <CardHeader>
           <CardTitle className="font-headline text-xl">All Packages</CardTitle>
@@ -187,7 +270,58 @@ export default function PackagesPage() {
           )}
         </CardContent>
       </Card>
+
+      <Card className="shadow-lg">
+          <CardHeader>
+              <CardTitle className="font-headline text-xl">Manage Accommodation Types</CardTitle>
+              <CardDescription>Add or remove accommodation types used in your packages.</CardDescription>
+          </CardHeader>
+          <CardContent>
+              <div className="grid md:grid-cols-2 gap-8">
+                  <div>
+                      <h3 className="font-medium mb-4">Existing Types</h3>
+                      {isLoadingAccommodation ? (
+                          <div className="flex items-center space-x-2">
+                              <Loader2 className="h-4 w-4 animate-spin"/>
+                              <span>Loading...</span>
+                          </div>
+                      ) : accommodationTypes.length > 0 ? (
+                          <div className="space-y-2 max-h-60 overflow-y-auto pr-2">
+                              {accommodationTypes.map(type => (
+                                  <div key={type.id} className="flex items-center justify-between bg-secondary/50 p-2 rounded-md">
+                                      <span className="text-sm">{type.name}</span>
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteAccommodationType(type.id)}>
+                                          <Trash2 className="h-4 w-4 text-destructive"/>
+                                      </Button>
+                                  </div>
+                              ))}
+                          </div>
+                      ) : (
+                          <p className="text-sm text-muted-foreground">No accommodation types found.</p>
+                      )}
+                  </div>
+                  <div>
+                      <h3 className="font-medium mb-4">Add New Type</h3>
+                      <form onSubmit={handleAddAccommodationType} className="space-y-4">
+                          <div className="space-y-2">
+                              <Label htmlFor="accommodation-name">Type Name</Label>
+                              <Input 
+                                id="accommodation-name"
+                                placeholder="e.g., Luxury Hotel, Boutique Villa"
+                                value={newAccommodationName}
+                                onChange={e => setNewAccommodationName(e.target.value)}
+                                disabled={isSubmittingAccommodation}
+                              />
+                          </div>
+                          <Button type="submit" disabled={isSubmittingAccommodation || !newAccommodationName.trim()}>
+                              {isSubmittingAccommodation ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-5 w-5" />}
+                              Add Type
+                          </Button>
+                      </form>
+                  </div>
+              </div>
+          </CardContent>
+      </Card>
     </div>
   );
 }
-
