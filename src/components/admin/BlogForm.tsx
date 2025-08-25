@@ -20,6 +20,8 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Loader2 } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
@@ -46,6 +48,8 @@ interface BlogFormProps {
   onSubmitForm: (data: BlogFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
+
+const categories = ["Culture", "Wildlife", "Adventure", "Food"];
 
 export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormProps) {
   const router = useRouter();
@@ -130,9 +134,18 @@ export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormPr
             render={({ field }) => (
                 <FormItem>
                 <FormLabel>Category</FormLabel>
-                <FormControl>
-                    <Input placeholder="e.g., Travel Tips, Destinations" {...field} />
-                </FormControl>
+                <Select onValueChange={field.onChange} defaultValue={field.value}>
+                    <FormControl>
+                    <SelectTrigger>
+                        <SelectValue placeholder="Select a category" />
+                    </SelectTrigger>
+                    </FormControl>
+                    <SelectContent>
+                    {categories.map(category => (
+                        <SelectItem key={category} value={category}>{category}</SelectItem>
+                    ))}
+                    </SelectContent>
+                </Select>
                 <FormMessage />
                 </FormItem>
             )}
