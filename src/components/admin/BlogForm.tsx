@@ -26,7 +26,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
 
-const blogFormSchema = z.object({
+// Make image optional for edit form
+const blogFormSchemaForCreate = z.object({
   title: z.string().min(5, "Title must be at least 5 characters long."),
   slug: z.string().min(3, "Slug is required").regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase and contain only letters, numbers, and hyphens."),
   description: z.string().min(20, "Description must be at least 20 characters long."),
@@ -41,21 +42,34 @@ const blogFormSchema = z.object({
     ),
 });
 
-export type BlogFormData = z.infer<typeof blogFormSchema>;
+const blogFormSchemaForEdit = blogFormSchemaForCreate.extend({
+  image: z
+    .any()
+    .optional() // Make image optional for editing
+    .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+    .refine(
+        (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+      ".jpg, .jpeg, .png and .webp files are accepted."
+    ),
+});
+
+
+export type BlogFormData = z.infer<typeof blogFormSchemaForCreate>;
 
 interface BlogFormProps {
-  initialData?: any; // To be defined for edit mode
+  initialData?: any;
   onSubmitForm: (data: BlogFormData) => Promise<void>;
   isSubmitting?: boolean;
 }
 
-const categories = ["Culture", "Wildlife", "Adventure", "Food"];
+const categories = ["Culture", "Wildlife", "Adventure", "Food", "Travel"];
 
 export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormProps) {
   const router = useRouter();
+  const isEditMode = !!initialData;
 
   const form = useForm<BlogFormData>({
-    resolver: zodResolver(blogFormSchema),
+    resolver: zodResolver(isEditMode ? blogFormSchemaForEdit : blogFormSchemaForCreate),
     defaultValues: {
       title: initialData?.title || "",
       slug: initialData?.slug || "",
@@ -67,7 +81,8 @@ export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormPr
 
   const watchTitle = form.watch("title");
   React.useEffect(() => {
-    if (watchTitle && !initialData?.slug && !form.formState.dirtyFields.slug) {
+    // Only auto-generate slug if it's a new post and slug field is not manually changed
+    if (watchTitle && !isEditMode && !form.formState.dirtyFields.slug) {
       const newSlug = watchTitle
         .toLowerCase()
         .trim()
@@ -76,7 +91,7 @@ export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormPr
         .replace(/--+/g, '-');
       form.setValue("slug", newSlug, { shouldValidate: true });
     }
-  }, [watchTitle, form, initialData?.slug, form.formState.dirtyFields.slug]);
+  }, [watchTitle, form, isEditMode, form.formState.dirtyFields.slug]);
 
   const imageRef = form.register("image");
 
@@ -159,7 +174,12 @@ export function BlogForm({ initialData, onSubmitForm, isSubmitting }: BlogFormPr
                 <FormControl>
                     <Input type="file" {...imageRef} />
                 </FormControl>
-                <FormDescription>Upload a featured image for the blog post (max 5MB).</FormDescription>
+                <FormDescription>
+                    {isEditMode 
+                        ? "Upload a new image to replace the current one (optional)."
+                        : "Upload a featured image for the blog post (max 5MB)."
+                    }
+                </FormDescription>
                 <FormMessage />
                 </FormItem>
             )}
