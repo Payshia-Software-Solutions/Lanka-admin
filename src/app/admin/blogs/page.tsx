@@ -169,7 +169,7 @@ export default function BlogsPage() {
                      <TableCell>
                       {blog.image_url ? (
                          <Image 
-                            src={`http://localhost/travel_web_server${blog.image_url}`} 
+                            src={`https://content-provider.payshia.com/travel-web/${blog.image_url}`} 
                             alt={blog.title}
                             data-ai-hint="blog post image"
                             width={80}
