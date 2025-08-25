@@ -20,6 +20,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  Newspaper,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ const navItems = [
   { href: '/admin/packages', label: 'Packages', icon: PackageIcon },
   { href: '/admin/promotions', label: 'Promotions', icon: Percent },
   { href: '/admin/cms', label: 'CMS Pages', icon: FileText },
+  { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },
   { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
   { href: '/admin/users', label: 'Users & Roles', icon: Users },
   { href: '/admin/pricing-suggestions', label: 'AI Pricing', icon: DollarSign },
