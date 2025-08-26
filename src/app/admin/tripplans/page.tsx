@@ -205,8 +205,12 @@ export default function TripPlansPage() {
                                             <Calendar className="h-5 w-5 text-primary" />
                                             <CardTitle className="text-lg">Trip Overview</CardTitle>
                                        </CardHeader>
-                                       <CardContent className="text-sm space-y-2">
-                                            <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i?.interest_name).join(', ')}</p>
+                                        <CardContent className="text-sm space-y-2">
+                                            <div><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i?.interest_name).join(', ')}</div>
+                                            <Separator/>
+                                            {planDetails.plan?.start_date && planDetails.plan?.end_date && (
+                                                <p><strong>Dates:</strong> {`${format(new Date(planDetails.plan.start_date.replace(' ', 'T')), "MMM d, yyyy")} - ${format(new Date(planDetails.plan.end_date.replace(' ', 'T')), "MMM d, yyyy")}`}</p>
+                                            )}
                                             <div>
                                                 <strong>Travelers: </strong>
                                                 {planDetails.plan?.number_of_adults} Adults
