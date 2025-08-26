@@ -16,7 +16,6 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { FormDescription } from "@/components/ui/form";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import type { Activity } from "@/lib/types";
 
@@ -215,7 +214,7 @@ export default function EditActivityPage() {
                             disabled={isSubmitting}
                             accept="image/png, image/jpeg, image/webp"
                         />
-                         <FormDescription>Upload a new image to replace the current one.</FormDescription>
+                         <p className="text-sm text-muted-foreground pt-1">Upload a new image to replace the current one.</p>
                     </div>
                 </div>
 
