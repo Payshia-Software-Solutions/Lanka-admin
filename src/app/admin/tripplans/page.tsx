@@ -206,11 +206,11 @@ export default function TripPlansPage() {
                       </TableCell>
                       <TableCell>{plan.duration} days</TableCell>
                       <TableCell>
-                        {plan.number_of_adults} Adults
-                        {plan.number_of_children > 0 &&
-                          `, ${plan.number_of_children} Children`}
-                        {plan.number_of_infants > 0 &&
-                          `, ${plan.number_of_infants} Infants`}
+                        {plan.adults} Adults
+                        {plan.children > 0 &&
+                          `, ${plan.children} Children`}
+                        {plan.infants > 0 &&
+                          `, ${plan.infants} Infants`}
                       </TableCell>
                       <TableCell>
                         {plan.budget_range ? `${plan.budget_range}` : "N/A"}
@@ -301,15 +301,15 @@ export default function TripPlansPage() {
                                       )}
                                     <div>
                                       <strong>Travelers: </strong>
-                                      {planDetails.plan?.number_of_adults}{" "}
+                                      {planDetails.plan?.adults}{" "}
                                       Adults
-                                      {planDetails.plan?.number_of_children &&
-                                      planDetails.plan.number_of_children > 0
-                                        ? `, ${planDetails.plan.number_of_children} Children`
+                                      {planDetails.plan?.children &&
+                                      planDetails.plan.children > 0
+                                        ? `, ${planDetails.plan.children} Children`
                                         : ""}
-                                      {planDetails.plan?.number_of_infants &&
-                                      planDetails.plan.number_of_infants > 0
-                                        ? `, ${planDetails.plan.number_of_infants} Infants`
+                                      {planDetails.plan?.infants &&
+                                      planDetails.plan.infants > 0
+                                        ? `, ${planDetails.plan.infants} Infants`
                                         : ""}
                                     </div>
                                     <Separator/>

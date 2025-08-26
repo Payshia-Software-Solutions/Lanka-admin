@@ -2,6 +2,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -95,9 +96,9 @@ export interface TripPlan {
   full_name: string; // This seems to be joined in the main query
   from_date: string;
   to_date: string;
-  number_of_adults: number;
-  number_of_children: number;
-  number_of_infants: number;
+  adults: number;
+  children: number;
+  infants: number;
   duration: number;
   pace: string;
   additional_requests: string | null;
