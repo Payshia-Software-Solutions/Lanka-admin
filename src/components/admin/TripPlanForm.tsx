@@ -15,8 +15,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { destinations as hardcodedDestinations } from '@/lib/destinations';
 import { useToast } from "@/hooks/use-toast";
-import { useRouter } from 'next/navigation';
-import type { ApiDestination, Destination, Activity as ActivityType } from '@/lib/types';
+import type { ApiDestination, Destination, Activity as ActivityType, User } from '@/lib/types';
 
 
 const steps = [
@@ -133,46 +132,56 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
+  
+  const [allUsers, setAllUsers] = useState<User[]>([]);
 
-  const [user, setUser] = useState<{ id: string | number, company_id: string | number } | null>(null);
 
   useEffect(() => {
-    const fetchDestinations = async () => {
-      try {
-        const res = await fetch('http://localhost/travel_web_server/destinations');
-        const apiData = await res.json();
-        const combined: CombinedDestination[] = [...hardcodedDestinations];
-        if (Array.isArray(apiData)) {
-            apiData.forEach((apiDest: ApiDestination) => {
-                if (!hardcodedDestinations.some(hd => hd.id === apiDest.id.toString())) {
-                    combined.push(apiDest);
-                }
+    const fetchInitialData = async () => {
+        try {
+            const [destRes, actRes, usersRes] = await Promise.all([
+                fetch('http://localhost/travel_web_server/destinations'),
+                fetch('http://localhost/travel_web_server/activities'),
+                fetch('http://localhost/travel_web_server/users')
+            ]);
+            
+            const apiDestData = await destRes.json();
+            const combinedDest: CombinedDestination[] = [...hardcodedDestinations];
+            if (Array.isArray(apiDestData)) {
+                apiDestData.forEach((apiDest: ApiDestination) => {
+                    if (!hardcodedDestinations.some(hd => hd.id === apiDest.id.toString())) {
+                        combinedDest.push(apiDest);
+                    }
+                });
+            }
+            setAllDestinations(combinedDest);
+            setFilteredDestinations(combinedDest);
+
+            const actData = await actRes.json();
+            if(Array.isArray(actData)) {
+                setAllActivities(actData);
+            }
+
+            const usersData = await usersRes.json();
+             if(Array.isArray(usersData)) {
+                setAllUsers(usersData);
+            }
+
+        } catch (error) {
+            console.error("Failed to fetch initial data:", error);
+            toast({
+                variant: "destructive",
+                title: "Error",
+                description: "Could not load required data for the form.",
             });
+            // Fallback for destinations
+            setAllDestinations(hardcodedDestinations);
+            setFilteredDestinations(hardcodedDestinations);
         }
-        setAllDestinations(combined);
-        setFilteredDestinations(combined);
-      } catch (error) {
-        console.error("Failed to fetch destinations:", error);
-        setAllDestinations(hardcodedDestinations);
-        setFilteredDestinations(hardcodedDestinations);
-      }
     };
     
-    const fetchActivities = async () => {
-        try {
-            const res = await fetch('http://localhost/travel_web_server/activities');
-            const data = await res.json();
-            if(Array.isArray(data)) {
-                setAllActivities(data);
-            }
-        } catch (error) {
-            console.error("Failed to fetch activities:", error);
-        }
-    };
-
-    fetchDestinations();
-    fetchActivities();
-  }, []);
+    fetchInitialData();
+  }, [toast]);
 
   const groupedActivities = useMemo(() => {
     return allActivities.reduce((acc, activity) => {
@@ -191,18 +200,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     if (url.startsWith('http')) return url;
     return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
   };
-
-  useEffect(() => {
-    const storedUser = localStorage.getItem('loggedInUser');
-    if (storedUser) {
-        try {
-            const parsedUser = JSON.parse(storedUser);
-            setUser(parsedUser);
-        } catch (error) {
-            console.error("Failed to parse user from localStorage", error);
-        }
-    }
-  }, []);
 
   const estimatedCost = useMemo(() => {
     let totalCost = 0;
@@ -321,20 +318,20 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   };
 
   const handleFinalizeTrip = async () => {
-    const storedUser = localStorage.getItem('loggedInUser');
-    if (!storedUser) {
+    const storedUserRaw = localStorage.getItem('loggedInUser');
+    if (!storedUserRaw) {
         toast({
             variant: "destructive",
-            title: "Not Logged In or Missing User Data",
-            description: "You must be logged in to create a trip plan. Please log in again.",
+            title: "Authentication Error",
+            description: "Could not find logged in user data. Please log in again.",
         });
         return;
     }
-
-    let parsedUser;
+    
+    let loggedInUser;
     try {
-        parsedUser = JSON.parse(storedUser);
-    } catch(e) {
+        loggedInUser = JSON.parse(storedUserRaw);
+    } catch (error) {
         toast({
             variant: "destructive",
             title: "Session Error",
@@ -343,18 +340,32 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         return;
     }
 
-    if (!parsedUser || !parsedUser.id || !parsedUser.company_id) {
+    if (!loggedInUser || !loggedInUser.company_id) {
+         toast({
+            variant: "destructive",
+            title: "Authentication Error",
+            description: "Company ID is missing from your profile. Please log in again.",
+        });
+        return;
+    }
+
+    const adminUser = allUsers.find(u => 
+        u.role === 'admin' && 
+        (u as any).company_id?.toString() === loggedInUser.company_id.toString()
+    );
+
+    if (!adminUser) {
         toast({
             variant: "destructive",
-            title: "Not Logged In or Missing User Data",
-            description: "You must be logged in to create a trip plan. Please log in again.",
+            title: "Authorization Error",
+            description: "Could not find a valid admin user for your company to create the plan.",
         });
         return;
     }
 
     const tripPlanData: TripPlanFormData = {
-        company_id: parsedUser.company_id, 
-        user_id: parsedUser.id,
+        company_id: loggedInUser.company_id, 
+        user_id: adminUser.id,
         from_date: fromDate ? format(fromDate, 'yyyy-MM-dd') : null,
         to_date: toDate ? format(toDate, 'yyyy-MM-dd') : null,
         adults: adults,
@@ -905,4 +916,3 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   );
 }
 
-    

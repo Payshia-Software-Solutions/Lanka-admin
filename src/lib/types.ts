@@ -211,8 +211,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  phone?: string;
-  // Password typically not sent to client
+  company_id?: string | number;
 }
 
 export interface Hotel {
@@ -242,4 +241,3 @@ export interface VehicleType {
   created_at: string;
   updated_at: string;
 }
-
