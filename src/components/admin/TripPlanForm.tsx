@@ -321,7 +321,29 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   };
 
   const handleFinalizeTrip = async () => {
-    if (!user || !user.id || !user.company_id) {
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (!storedUser) {
+        toast({
+            variant: "destructive",
+            title: "Not Logged In or Missing User Data",
+            description: "You must be logged in to create a trip plan. Please log in again.",
+        });
+        return;
+    }
+
+    let parsedUser;
+    try {
+        parsedUser = JSON.parse(storedUser);
+    } catch(e) {
+        toast({
+            variant: "destructive",
+            title: "Session Error",
+            description: "Could not read user data. Please log in again.",
+        });
+        return;
+    }
+
+    if (!parsedUser || !parsedUser.id || !parsedUser.company_id) {
         toast({
             variant: "destructive",
             title: "Not Logged In or Missing User Data",
@@ -331,8 +353,8 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     }
 
     const tripPlanData: TripPlanFormData = {
-        company_id: user.company_id, 
-        user_id: user.id,
+        company_id: parsedUser.company_id, 
+        user_id: parsedUser.id,
         from_date: fromDate ? format(fromDate, 'yyyy-MM-dd') : null,
         to_date: toDate ? format(toDate, 'yyyy-MM-dd') : null,
         adults: adults,
@@ -882,3 +904,5 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     </div>
   );
 }
+
+    
