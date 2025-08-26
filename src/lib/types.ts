@@ -1,6 +1,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -92,8 +93,8 @@ export interface TripPlan {
   id: number;
   user_id: number;
   full_name: string; // This seems to be joined in the main query
-  start_date: string;
-  end_date: string;
+  from_date: string;
+  to_date: string;
   number_of_adults: number;
   number_of_children: number;
   number_of_infants: number;
@@ -101,8 +102,8 @@ export interface TripPlan {
   pace: string;
   additional_requests: string | null;
   status: string;
-  budget_range_min: number;
-  budget_range_max: number;
+  budget_range_min: number | null;
+  budget_range_max: number | null;
   estimated_cost: string;
   budget_range: string;
 }

@@ -185,7 +185,7 @@ export default function TripPlansPage() {
               </TableHeader>
               <TableBody>
                 {tripPlans.map((plan) => (
-                  <React.Fragment key={`plan-${plan.id}`}>
+                  <React.Fragment key={plan.id}>
                     <TableRow
                       onClick={() => handleRowClick(plan.id)}
                       className="cursor-pointer"
@@ -194,12 +194,12 @@ export default function TripPlansPage() {
                         {plan.full_name}
                       </TableCell>
                       <TableCell>
-                        {plan.start_date && plan.end_date
+                        {plan.from_date && plan.to_date
                           ? `${format(
-                              new Date(plan.start_date.replace(" ", "T")),
+                              new Date(plan.from_date.replace(" ", "T")),
                               "MMM d, yyyy"
                             )} - ${format(
-                              new Date(plan.end_date.replace(" ", "T")),
+                              new Date(plan.to_date.replace(" ", "T")),
                               "MMM d, yyyy"
                             )}`
                           : "N/A"}
@@ -232,7 +232,7 @@ export default function TripPlansPage() {
                     </TableRow>
 
                     {selectedPlanId === plan.id && (
-                      <TableRow key={`plan-details-${plan.id}`}>
+                      <TableRow key={`details-${plan.id}`}>
                         <TableCell colSpan={7}>
                           {isDetailsLoading && (
                             <div className="flex justify-center items-center p-8">
@@ -289,13 +289,13 @@ export default function TripPlansPage() {
                                         .join(", ")}
                                     </div>
                                     <Separator />
-                                    {planDetails.plan?.start_date &&
-                                      planDetails.plan?.end_date && (
+                                    {planDetails.plan?.from_date &&
+                                      planDetails.plan?.to_date && (
                                         <p>
                                           <strong>Dates:</strong>{" "}
                                           {`${format(
                                             new Date(
-                                              planDetails.plan.start_date.replace(
+                                              planDetails.plan.from_date.replace(
                                                 " ",
                                                 "T"
                                               )
@@ -303,7 +303,7 @@ export default function TripPlansPage() {
                                             "MMM d, yyyy"
                                           )} - ${format(
                                             new Date(
-                                              planDetails.plan.end_date.replace(
+                                              planDetails.plan.to_date.replace(
                                                 " ",
                                                 "T"
                                               )
