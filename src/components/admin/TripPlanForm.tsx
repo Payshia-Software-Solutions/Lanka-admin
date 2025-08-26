@@ -396,22 +396,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     </Card>
   );
 
-  const SummaryItemCard = ({ name, image, aiHint, onSelect }: { name: string, image: string, aiHint: string, onSelect: () => void }) => (
-    <Card
-      className="relative rounded-lg overflow-hidden cursor-pointer group"
-      onClick={onSelect}
-    >
-      <Image src={image} alt={name} width={400} height={300} className="h-32 w-full object-cover" data-ai-hint={aiHint} />
-      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
-      <div className="absolute top-2 right-2 w-6 h-6 rounded-full border-2 border-white bg-white/30 flex items-center justify-center">
-        <div className="w-3 h-3 rounded-full bg-white" />
-      </div>
-      <div className="absolute bottom-0 left-0 p-4 text-white">
-        <h3 className="font-bold text-base flex items-center gap-2"><MapPin className="h-4 w-4"/>{name}</h3>
-      </div>
-    </Card>
-  );
-
   return (
     <div className="bg-white text-foreground">
         {/* Stepper */}
@@ -816,9 +800,11 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
                         {selectedDestinations.length > 0 && (
                         <>
                             <h3 className="text-xl font-semibold">Destinations</h3>
-                            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                            <div className="flex flex-wrap gap-2">
                                 {selectedDestinations.map(dest => (
-                                    <SummaryItemCard key={'hero_bg_image_url' in dest ? dest.id : dest.id} name={dest.name} image={'hero_bg_image_url' in dest ? dest.hero_bg_image_url : dest.image} aiHint={dest.name.toLowerCase()} onSelect={() => {}} />
+                                    <Badge key={'hero_bg_image_url' in dest ? dest.id : dest.id} variant="secondary" className="text-base py-1 px-3">
+                                        {dest.name}
+                                    </Badge>
                                 ))}
                             </div>
                         </>
@@ -829,7 +815,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
                     <div className="space-y-6">
                         <h3 className="text-xl font-semibold">Accommodation</h3>
                         <Card className="flex flex-col md:flex-row items-center gap-6 p-4">
-                            <Image src="https://placehold.co/400x300.png" alt={selectedAccommodation} width={200} height={150} className="rounded-lg object-cover w-full md:w-1/4" data-ai-hint="hotel room" />
                             <div className="flex-grow">
                                 <Badge>{selectedAccommodation}</Badge>
                                 <h4 className="font-semibold text-lg mt-2">Hotel with stunning mountain views, perfect for a peaceful getaway</h4>
@@ -861,7 +846,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
                     <div className="space-y-6">
                         <h3 className="text-xl font-semibold">Transportation</h3>
                         <Card className="flex flex-col md:flex-row items-center gap-6 p-4">
-                            <Image src="https://placehold.co/400x300.png" alt={selectedTransportation[0]} width={200} height={150} className="rounded-lg object-cover w-full md:w-1/4" data-ai-hint="rental car" />
                             <div className="flex-grow">
                                 <Badge>{selectedTransportation.join(', ')}</Badge>
                                 <h4 className="font-semibold text-lg mt-2">Compact car, great for city navigation and flexibility during your trip</h4>
@@ -900,4 +884,3 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     </div>
   );
 }
-

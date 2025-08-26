@@ -5,10 +5,9 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { ArrowLeft } from "lucide-react";
-import { TripPlanForm } from "@/components/admin/TripPlanForm";
+import { TripPlanForm, type TripPlanFormData } from "@/components/admin/TripPlanForm";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
-import type { TripPlanFormData } from "@/components/admin/TripPlanForm";
 
 
 export default function NewTripPlanPage() {
