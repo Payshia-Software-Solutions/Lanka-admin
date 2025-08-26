@@ -257,7 +257,7 @@ export default function TripPlansPage() {
                                     <Card>
                                         <CardHeader className="flex flex-row items-center gap-2"><Bed className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Accommodation</CardTitle></CardHeader>
                                         <CardContent>
-                                            <p className="text-sm">{planDetails.amenities?.map(a => a.amenity_name).join(', ') || 'Not specified'}</p>
+                                            <ul className="list-disc list-inside text-sm">{planDetails.amenities?.map(a => <li key={a.id}>{a.amenity_name}</li>)}</ul>
                                         </CardContent>
                                     </Card>
                                     <Card>
