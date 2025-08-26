@@ -1,5 +1,6 @@
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -103,6 +104,7 @@ export interface TripPlan {
   budget_range_min: number;
   budget_range_max: number;
   estimated_cost: string;
+  budget_range: string;
 }
 
 // Detailed view types

@@ -140,7 +140,8 @@ export default function TripPlansPage() {
                   <TableHead>Trip Dates</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Travelers</TableHead>
-                  <TableHead>Budget (LKR)</TableHead>
+                  <TableHead>Budget Range</TableHead>
+                  <TableHead>Estimated Cost (LKR)</TableHead>
                   <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -163,9 +164,10 @@ export default function TripPlansPage() {
                         {plan.number_of_infants > 0 && `, ${plan.number_of_infants} Infants`}
                     </TableCell>
                      <TableCell>
-                      {plan.budget_range_min && plan.budget_range_max ? (
-                        `LKR ${plan.budget_range_min} - ${plan.budget_range_max}`
-                      ) : 'N/A'}
+                      {plan.budget_range ? `LKR ${plan.budget_range}` : 'N/A'}
+                    </TableCell>
+                    <TableCell>
+                      {plan.estimated_cost ? parseFloat(plan.estimated_cost).toFixed(2) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon">
@@ -175,7 +177,7 @@ export default function TripPlansPage() {
                   </TableRow>
                    {selectedPlanId === plan.id && (
                      <TableRow>
-                       <TableCell colSpan={6}>
+                       <TableCell colSpan={7}>
                          {isDetailsLoading && (
                             <div className="flex justify-center items-center p-8">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
