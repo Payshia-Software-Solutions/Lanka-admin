@@ -197,7 +197,7 @@ export default function TripPlansPage() {
                                        </CardHeader>
                                        <CardContent className="text-sm space-y-2">
                                             <p><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></p>
-                                            <p><strong>Interests:</strong> {planDetails.interests && (Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests]).map(i => i.interest_name).join(', ')}</p>
+                                            <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i.interest_name).join(', ')}</p>
                                        </CardContent>
                                    </Card>
                                </div>
