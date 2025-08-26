@@ -17,7 +17,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, ChevronDown, User, Calendar, MapPin, Bus, Smile, Plus, Star, Bed } from "lucide-react";
+import { Loader2, ChevronDown, User, Calendar, MapPin, Bus, Smile, Plus, Star, Bed, Plane } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { TripPlan, TripPlanDetails } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -148,7 +148,11 @@ export default function TripPlansPage() {
                   <TableRow key={plan.id} onClick={() => handleRowClick(plan.id)} className="cursor-pointer">
                     <TableCell className="font-medium">{plan.full_name}</TableCell>
                     <TableCell>
-                      {format(new Date(plan.start_date.replace(' ', 'T')), "MMM d, yyyy")} - {format(new Date(plan.end_date.replace(' ', 'T')), "MMM d, yyyy")}
+                      {plan.start_date && plan.end_date ? (
+                        `${format(new Date(plan.start_date.replace(' ', 'T')), "MMM d, yyyy")} - ${format(new Date(plan.end_date.replace(' ', 'T')), "MMM d, yyyy")}`
+                      ) : (
+                        'N/A'
+                      )}
                     </TableCell>
                     <TableCell>{plan.duration} days</TableCell>
                     <TableCell>
