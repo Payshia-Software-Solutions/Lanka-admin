@@ -206,7 +206,6 @@ export default function TripPlansPage() {
                                             <CardTitle className="text-lg">Trip Overview</CardTitle>
                                        </CardHeader>
                                        <CardContent className="text-sm space-y-2">
-                                            <div className="flex items-center gap-2"><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></div>
                                             <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i?.interest_name).join(', ')}</p>
                                             <div>
                                                 <strong>Travelers: </strong>
