@@ -117,13 +117,15 @@ export default function ActivitiesPage() {
         body: formData,
       });
 
+      const responseData = await response.json();
+
       if (response.ok) {
-        toast({ title: "Success", description: "Activity added." });
+        toast({ title: "Success", description: responseData.message || "Activity added." });
         setNewActivity({ name: "", description: "", location: "", duration: "", image: null });
+        document.getElementById('activity-image')?.form?.reset();
         fetchActivities(); // Refresh list
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to add activity.");
+        throw new Error(responseData.error || "Failed to add activity.");
       }
     } catch (error) {
       const errorMessage =
@@ -224,11 +226,11 @@ export default function ActivitiesPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                <Label htmlFor="activity-duration">Duration (Days)</Label>
+                <Label htmlFor="activity-duration">Duration (Hours)</Label>
                 <Input
                     id="activity-duration"
                     type="number"
-                    placeholder="e.g., 1"
+                    placeholder="e.g., 3"
                     value={newActivity.duration}
                     onChange={(e) =>
                     setNewActivity({ ...newActivity, duration: e.target.value })
@@ -276,7 +278,7 @@ export default function ActivitiesPage() {
                             <TableHead>Image</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Location</TableHead>
-                            <TableHead>Duration (Days)</TableHead>
+                            <TableHead>Duration (Hours)</TableHead>
                             <TableHead>Description</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
@@ -287,7 +289,7 @@ export default function ActivitiesPage() {
                                 <TableCell>
                                     {activity.image_url ? (
                                         <Image
-                                            src={`https://content-provider.payshia.com/travel-web/${activity.image_url}`}
+                                            src={`https://content-provider.payshia.com/travel-web${activity.image_url}`}
                                             alt={activity.name}
                                             width={64}
                                             height={64}
