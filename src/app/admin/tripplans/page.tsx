@@ -178,7 +178,7 @@ export default function TripPlansPage() {
                   <TableHead>Trip Dates</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Travelers</TableHead>
-                  <TableHead>Budget Range</TableHead>
+                  <TableHead>Budget Range (LKR)</TableHead>
                   <TableHead>Estimated Cost (LKR)</TableHead>
                   <TableHead className="text-right">Details</TableHead>
                 </TableRow>
@@ -213,7 +213,7 @@ export default function TripPlansPage() {
                           `, ${plan.number_of_infants} Infants`}
                       </TableCell>
                       <TableCell>
-                        {plan.budget_range ? `LKR ${plan.budget_range}` : "N/A"}
+                        {plan.budget_range ? `${plan.budget_range}` : "N/A"}
                       </TableCell>
                       <TableCell>
                         {plan.estimated_cost
@@ -276,19 +276,6 @@ export default function TripPlansPage() {
                                     </CardTitle>
                                   </CardHeader>
                                   <CardContent className="text-sm space-y-2">
-                                    <div>
-                                      <strong>Interests:</strong>{" "}
-                                      {(
-                                        Array.isArray(planDetails.interests)
-                                          ? planDetails.interests
-                                          : [planDetails.interests].filter(
-                                              Boolean
-                                            )
-                                      )
-                                        .map((i: any) => i?.interest_name)
-                                        .join(", ")}
-                                    </div>
-                                    <Separator />
                                     {planDetails.plan?.from_date &&
                                       planDetails.plan?.to_date && (
                                         <p>
@@ -325,6 +312,19 @@ export default function TripPlansPage() {
                                         ? `, ${planDetails.plan.number_of_infants} Infants`
                                         : ""}
                                     </div>
+                                    <Separator/>
+                                    <div>
+                                      <strong>Interests:</strong>{" "}
+                                      {(
+                                        Array.isArray(planDetails.interests)
+                                          ? planDetails.interests
+                                          : [planDetails.interests].filter(
+                                              Boolean
+                                            )
+                                      )
+                                        .map((i: any) => i?.interest_name)
+                                        .join(", ")}
+                                    </div>
                                   </CardContent>
                                 </Card>
                               </div>
@@ -340,13 +340,11 @@ export default function TripPlansPage() {
                                   </CardHeader>
                                   <CardContent className="text-sm space-y-2">
                                     <p>
-                                      <strong>Budget Range:</strong>{" "}
-                                      {planDetails.plan?.budget_range
-                                        ? `LKR ${planDetails.plan.budget_range}`
-                                        : "N/A"}
+                                      <strong>Budget Range (LKR):</strong>{" "}
+                                      {planDetails.plan?.budget_range || "N/A"}
                                     </p>
                                     <p>
-                                      <strong>Estimated Cost:</strong> LKR{" "}
+                                      <strong>Estimated Cost (LKR):</strong>{" "}
                                       {planDetails.plan?.estimated_cost
                                         ? parseFloat(
                                             planDetails.plan.estimated_cost
