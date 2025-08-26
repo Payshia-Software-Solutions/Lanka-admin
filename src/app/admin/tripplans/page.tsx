@@ -144,8 +144,8 @@ export default function TripPlansPage() {
               </TableHeader>
               <TableBody>
                 {tripPlans.map((plan) => (
-                  <>
-                  <TableRow key={plan.id} onClick={() => handleRowClick(plan.id)} className="cursor-pointer">
+                  <React.Fragment key={plan.id}>
+                  <TableRow onClick={() => handleRowClick(plan.id)} className="cursor-pointer">
                     <TableCell className="font-medium">{plan.full_name}</TableCell>
                     <TableCell>
                       {plan.start_date && plan.end_date ? (
@@ -196,8 +196,8 @@ export default function TripPlansPage() {
                                             <CardTitle className="text-lg">Trip Overview</CardTitle>
                                        </CardHeader>
                                        <CardContent className="text-sm space-y-2">
-                                            <p><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></p>
-                                            <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i.interest_name).join(', ')}</p>
+                                            <div className="flex items-center gap-2"><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></div>
+                                            <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i?.interest_name).join(', ')}</p>
                                        </CardContent>
                                    </Card>
                                </div>
@@ -254,7 +254,7 @@ export default function TripPlansPage() {
                        </TableCell>
                      </TableRow>
                    )}
-                  </>
+                  </React.Fragment>
                 ))}
               </TableBody>
             </Table>
