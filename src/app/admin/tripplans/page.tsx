@@ -43,7 +43,7 @@ async function fetchTripPlanDetails(tripId: number): Promise<TripPlanDetails> {
     activities: `http://localhost/travel_web_server/trip_activities/${tripId}`,
     destinations: `http://localhost/travel_web_server/trip_destinations/${tripId}`,
     transportations: `http://localhost/travel_web_server/trip_transportations/trip/${tripId}`,
-    interests: `http://localhost/travel_web_server/trip_interests/${tripId}`,
+    interests: `http://localhost/travel_web_server/trip_interests/trip/${tripId}`,
     addons: `http://localhost/travel_web_server/trip_addons/trip/${tripId}`,
     amenities: `http://localhost/travel_web_server/trip_amenities/trip/${tripId}`,
   };
