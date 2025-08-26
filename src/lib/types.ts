@@ -1,5 +1,6 @@
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -82,6 +83,16 @@ export interface Package {
   exclusions?: string[];
   metaTitle?: string;
   metaDescription?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface TripPlan {
+  id: string;
+  title: string;
+  description: string;
+  durationDays: number;
+  destinations: string[];
   createdAt: Date;
   updatedAt: Date;
 }
