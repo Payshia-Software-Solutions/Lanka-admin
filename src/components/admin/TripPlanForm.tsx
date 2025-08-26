@@ -134,7 +134,7 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   const [fullName, setFullName] = useState("");
   const [email, setEmail] = useState("");
 
-  const [user, setUser] = useState<{ id: string, company_id: string } | null>(null);
+  const [user, setUser] = useState<{ id: string | number, company_id: string | number } | null>(null);
 
   useEffect(() => {
     const fetchDestinations = async () => {
@@ -198,8 +198,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         try {
             const parsedUser = JSON.parse(storedUser);
             setUser(parsedUser);
-            setFullName(parsedUser.name || "");
-            setEmail(parsedUser.email || "");
         } catch (error) {
             console.error("Failed to parse user from localStorage", error);
         }
@@ -323,11 +321,11 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   };
 
   const handleFinalizeTrip = async () => {
-    if (!user) {
+    if (!user || !user.id || !user.company_id) {
         toast({
             variant: "destructive",
-            title: "Not Logged In",
-            description: "You must be logged in to create a trip plan.",
+            title: "Not Logged In or Missing User Data",
+            description: "You must be logged in to create a trip plan. Please log in again.",
         });
         return;
     }
