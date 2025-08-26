@@ -3,6 +3,7 @@
 
 import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,7 +35,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { PlusCircle, Loader2, Trash2 } from "lucide-react";
+import { PlusCircle, Loader2, Trash2, Edit } from "lucide-react";
 import type { Activity } from "@/lib/types";
 
 
@@ -122,7 +123,7 @@ export default function ActivitiesPage() {
       if (response.ok) {
         toast({ title: "Success", description: responseData.message || "Activity added." });
         setNewActivity({ name: "", description: "", location: "", duration: "", image: null });
-        document.getElementById('activity-image')?.form?.reset();
+        (document.getElementById('activity-image-create-form') as HTMLFormElement)?.reset();
         fetchActivities(); // Refresh list
       } else {
         throw new Error(responseData.error || "Failed to add activity.");
@@ -182,7 +183,7 @@ export default function ActivitiesPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleAddActivity} className="space-y-4">
+          <form id="activity-image-create-form" onSubmit={handleAddActivity} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="activity-name">Activity Name</Label>
@@ -305,27 +306,34 @@ export default function ActivitiesPage() {
                                 <TableCell>{activity.duration}</TableCell>
                                 <TableCell className="text-muted-foreground max-w-xs truncate">{activity.description}</TableCell>
                                 <TableCell className="text-right">
-                                    <AlertDialog>
-                                        <AlertDialogTrigger asChild>
-                                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
-                                                <Trash2 className="h-4 w-4" />
-                                            </Button>
-                                        </AlertDialogTrigger>
-                                        <AlertDialogContent>
-                                            <AlertDialogHeader>
-                                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                                <AlertDialogDescription>
-                                                    This will permanently delete the "{activity.name}" activity. This action cannot be undone.
-                                                </AlertDialogDescription>
-                                            </AlertDialogHeader>
-                                            <AlertDialogFooter>
-                                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                                <AlertDialogAction onClick={() => handleDeleteActivity(activity.id)} className="bg-destructive hover:bg-destructive/90">
-                                                    Yes, delete
-                                                </AlertDialogAction>
-                                            </AlertDialogFooter>
-                                        </AlertDialogContent>
-                                    </AlertDialog>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Button asChild variant="ghost" size="icon" className="h-8 w-8">
+                                          <Link href={`/admin/activities/${activity.id}/edit`}>
+                                            <Edit className="h-4 w-4" />
+                                          </Link>
+                                        </Button>
+                                        <AlertDialog>
+                                            <AlertDialogTrigger asChild>
+                                                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
+                                                    <Trash2 className="h-4 w-4" />
+                                                </Button>
+                                            </AlertDialogTrigger>
+                                            <AlertDialogContent>
+                                                <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This will permanently delete the "{activity.name}" activity. This action cannot be undone.
+                                                    </AlertDialogDescription>
+                                                </AlertDialogHeader>
+                                                <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDeleteActivity(activity.id)} className="bg-destructive hover:bg-destructive/90">
+                                                        Yes, delete
+                                                    </AlertDialogAction>
+                                                </AlertDialogFooter>
+                                            </AlertDialogContent>
+                                        </AlertDialog>
+                                    </div>
                                 </TableCell>
                             </TableRow>
                         ))}
