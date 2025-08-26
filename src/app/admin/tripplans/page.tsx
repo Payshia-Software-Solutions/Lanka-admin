@@ -18,7 +18,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Loader2, ChevronDown, User, Calendar, MapPin, Bus, Smile, Plus, Star, Bed, Plane } from "lucide-react";
+import { Loader2, ChevronDown, User, Calendar, MapPin, Bus, Smile, Plus, Star, Bed, Plane, Users, DollarSign } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { TripPlan, TripPlanDetails } from "@/lib/types";
 import { Button } from "@/components/ui/button";
@@ -140,6 +140,7 @@ export default function TripPlansPage() {
                   <TableHead>Trip Dates</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Travelers</TableHead>
+                  <TableHead>Budget (USD)</TableHead>
                   <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -159,6 +160,12 @@ export default function TripPlansPage() {
                     <TableCell>
                         {plan.number_of_adults} Adults
                         {plan.number_of_children > 0 && `, ${plan.number_of_children} Children`}
+                        {plan.number_of_infants > 0 && `, ${plan.number_of_infants} Infants`}
+                    </TableCell>
+                     <TableCell>
+                      {plan.budget_range_min && plan.budget_range_max ? (
+                        `$${plan.budget_range_min} - $${plan.budget_range_max}`
+                      ) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
                        <Button variant="ghost" size="icon">
@@ -168,7 +175,7 @@ export default function TripPlansPage() {
                   </TableRow>
                    {selectedPlanId === plan.id && (
                      <TableRow>
-                       <TableCell colSpan={5}>
+                       <TableCell colSpan={6}>
                          {isDetailsLoading && (
                             <div className="flex justify-center items-center p-8">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -199,6 +206,26 @@ export default function TripPlansPage() {
                                        <CardContent className="text-sm space-y-2">
                                             <div className="flex items-center gap-2"><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></div>
                                             <p><strong>Interests:</strong> {(Array.isArray(planDetails.interests) ? planDetails.interests : [planDetails.interests].filter(Boolean)).map(i => i?.interest_name).join(', ')}</p>
+                                            <div>
+                                                <strong>Travelers: </strong>
+                                                {planDetails.plan?.number_of_adults} Adults
+                                                {planDetails.plan?.number_of_children && planDetails.plan.number_of_children > 0 ? `, ${planDetails.plan.number_of_children} Children` : ''}
+                                                {planDetails.plan?.number_of_infants && planDetails.plan.number_of_infants > 0 ? `, ${planDetails.plan.number_of_infants} Infants` : ''}
+                                            </div>
+                                       </CardContent>
+                                   </Card>
+                               </div>
+                               
+                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    {/* Budget and Cost Card */}
+                                   <Card>
+                                       <CardHeader className="flex flex-row items-center gap-2">
+                                            <DollarSign className="h-5 w-5 text-primary" />
+                                            <CardTitle className="text-lg">Budget & Cost</CardTitle>
+                                       </CardHeader>
+                                       <CardContent className="text-sm space-y-2">
+                                            <p><strong>Budget Range:</strong> ${planDetails.plan?.budget_range_min} - ${planDetails.plan?.budget_range_max} USD</p>
+                                            <p><strong>Estimated Cost:</strong> ${planDetails.plan?.estimated_cost ? parseFloat(planDetails.plan.estimated_cost).toFixed(2) : 'N/A'} USD</p>
                                        </CardContent>
                                    </Card>
                                </div>
@@ -271,5 +298,3 @@ export default function TripPlansPage() {
     </div>
   );
 }
-
-    

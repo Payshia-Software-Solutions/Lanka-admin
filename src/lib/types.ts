@@ -95,10 +95,14 @@ export interface TripPlan {
   end_date: string;
   number_of_adults: number;
   number_of_children: number;
+  number_of_infants: number;
   duration: number;
   pace: string;
   additional_requests: string | null;
   status: string;
+  budget_range_min: number;
+  budget_range_max: number;
+  estimated_cost: string;
 }
 
 // Detailed view types
@@ -232,5 +236,3 @@ export interface VehicleType {
   created_at: string;
   updated_at: string;
 }
-
-    
