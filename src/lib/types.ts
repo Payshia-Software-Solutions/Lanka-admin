@@ -1,5 +1,13 @@
 
 
+export interface Activity {
+  id: number;
+  company_id: number;
+  name: string;
+  description: string;
+  location: string;
+  duration: number;
+}
 // Represents one "Thing to Do" for a destination
 export interface ThingToDo {
   title: string;

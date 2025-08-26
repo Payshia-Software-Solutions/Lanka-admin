@@ -21,6 +21,7 @@ import {
   Sun,
   Moon,
   Newspaper,
+  Footprints,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -51,6 +52,7 @@ const navItems = [
   { href: '/admin/websites', label: 'Websites', icon: Globe },
   { href: '/admin/destinations', label: 'Destinations', icon: MapPin },
   { href: '/admin/packages', label: 'Packages', icon: PackageIcon },
+  { href: '/admin/activities', label: 'Activities', icon: Footprints },
   { href: '/admin/promotions', label: 'Promotions', icon: Percent },
   { href: '/admin/cms', label: 'CMS Pages', icon: FileText },
   { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },

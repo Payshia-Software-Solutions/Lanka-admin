@@ -45,12 +45,6 @@ export default function PackagesPage() {
   const [newAccommodationName, setNewAccommodationName] = useState("");
   const [isSubmittingAccommodation, setIsSubmittingAccommodation] = useState(false);
   
-  // State for Activities
-  const [activities, setActivities] = useState<Activity[]>([]);
-  const [isLoadingActivities, setIsLoadingActivities] = useState(true);
-  const [newActivity, setNewActivity] = useState({ name: "", description: "", location: "", duration: "" });
-  const [isSubmittingActivity, setIsSubmittingActivity] = useState(false);
-
   // State for Hotels
   const [hotels, setHotels] = useState<Hotel[]>([]);
   const [isLoadingHotels, setIsLoadingHotels] = useState(true);
@@ -113,27 +107,6 @@ export default function PackagesPage() {
         toast({ variant: "destructive", title: "Error", description: "Could not load accommodation types." });
       } finally {
         setIsLoadingAccommodation(false);
-      }
-  };
-
-  const fetchActivities = async () => {
-      if (!companyId) return;
-      setIsLoadingActivities(true);
-      try {
-        const response = await fetch('http://localhost/travel_web_server/activities');
-        if (!response.ok) throw new Error("Failed to fetch activities");
-        const allActivities = await response.json();
-        if (Array.isArray(allActivities)) {
-            const filteredActivities = allActivities.filter((act: Activity) => act.company_id.toString() === companyId.toString());
-            setActivities(filteredActivities);
-        } else {
-            setActivities([]);
-        }
-      } catch (error) {
-        console.error("Error fetching activities:", error);
-        toast({ variant: "destructive", title: "Error", description: "Could not load activities." });
-      } finally {
-        setIsLoadingActivities(false);
       }
   };
 
@@ -205,7 +178,6 @@ export default function PackagesPage() {
   useEffect(() => {
     if (companyId) {
         fetchAccommodationTypes();
-        fetchActivities();
         fetchHotels();
         fetchMealTypes();
         fetchDestinations();
@@ -264,51 +236,6 @@ export default function PackagesPage() {
         } else {
              const errorData = await response.json();
             throw new Error(errorData.error || "Failed to delete accommodation type.");
-        }
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        toast({ variant: "destructive", title: "Error", description: errorMessage });
-    }
-  }
-
-   const handleAddActivity = async (event: FormEvent) => {
-    event.preventDefault();
-    if (!newActivity.name.trim() || !companyId) return;
-
-    setIsSubmittingActivity(true);
-    try {
-        const response = await fetch('http://localhost/travel_web_server/activities', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ...newActivity, company_id: companyId, duration: parseInt(newActivity.duration, 10) || null }),
-        });
-        if (response.ok) {
-            toast({ title: "Success", description: "Activity added." });
-            setNewActivity({ name: "", description: "", location: "", duration: "" });
-            fetchActivities(); // Refresh list
-        } else {
-            const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to add activity.");
-        }
-    } catch (error) {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
-        toast({ variant: "destructive", title: "Error", description: errorMessage });
-    } finally {
-        setIsSubmittingActivity(false);
-    }
-  }
-
-  const handleDeleteActivity = async (id: number) => {
-    try {
-        const response = await fetch(`http://localhost/travel_web_server/activities/${id}`, {
-            method: 'DELETE',
-        });
-        if (response.ok || response.status === 204) {
-             toast({ title: "Success", description: "Activity deleted." });
-             fetchActivities(); // Refresh list
-        } else {
-             const errorData = await response.json();
-            throw new Error(errorData.error || "Failed to delete activity.");
         }
     } catch (error) {
         const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
@@ -493,104 +420,6 @@ export default function PackagesPage() {
             )}
           </CardContent>
         </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Manage Activities</CardTitle>
-          <CardDescription>Add or remove activities that can be included in packages.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleAddActivity} className="space-y-4 mb-6 pb-6 border-b">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="activity-name">Activity Name</Label>
-                <Input 
-                  id="activity-name"
-                  placeholder="e.g., Whale Watching"
-                  value={newActivity.name}
-                  onChange={(e) => setNewActivity({ ...newActivity, name: e.target.value })}
-                  disabled={isSubmittingActivity}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="activity-location">Location</Label>
-                <Input 
-                  id="activity-location"
-                  placeholder="e.g., Mirissa"
-                  value={newActivity.location}
-                  onChange={(e) => setNewActivity({ ...newActivity, location: e.target.value })}
-                  disabled={isSubmittingActivity}
-                />
-              </div>
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="activity-description">Description</Label>
-              <Textarea 
-                id="activity-description"
-                placeholder="A brief description of the activity."
-                value={newActivity.description}
-                onChange={(e) => setNewActivity({ ...newActivity, description: e.target.value })}
-                disabled={isSubmittingActivity}
-              />
-            </div>
-             <div className="space-y-2">
-                <Label htmlFor="activity-duration">Duration (Days)</Label>
-                <Input 
-                  id="activity-duration"
-                  type="number"
-                  placeholder="e.g., 1"
-                  value={newActivity.duration}
-                  onChange={(e) => setNewActivity({ ...newActivity, duration: e.target.value })}
-                  disabled={isSubmittingActivity}
-                />
-              </div>
-            <Button type="submit" disabled={isSubmittingActivity}>
-              {isSubmittingActivity ? <Loader2 className="animate-spin" /> : <PlusCircle />}
-              <span className="ml-2">Add Activity</span>
-            </Button>
-          </form>
-
-          {isLoadingActivities ? (
-            <div className="flex justify-center items-center h-24">
-              <Loader2 className="h-8 w-8 animate-spin text-primary" />
-            </div>
-          ) : activities.length > 0 ? (
-            <ul className="space-y-2">
-              {activities.map(activity => (
-                <li key={activity.id} className="flex items-center justify-between p-3 bg-secondary/50 rounded-md">
-                  <div>
-                    <h4 className="font-semibold text-sm">{activity.name}</h4>
-                    <p className="text-xs text-muted-foreground">{activity.location} - {activity.duration} Day(s)</p>
-                  </div>
-                   <AlertDialog>
-                      <AlertDialogTrigger asChild>
-                         <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive-foreground hover:bg-destructive">
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </AlertDialogTrigger>
-                      <AlertDialogContent>
-                        <AlertDialogHeader>
-                          <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                          <AlertDialogDescription>
-                            This will permanently delete the "{activity.name}" activity. This action cannot be undone.
-                          </AlertDialogDescription>
-                        </AlertDialogHeader>
-                        <AlertDialogFooter>
-                          <AlertDialogCancel>Cancel</AlertDialogCancel>
-                          <AlertDialogAction onClick={() => handleDeleteActivity(activity.id)} className="bg-destructive hover:bg-destructive/90">
-                            Yes, delete
-                          </AlertDialogAction>
-                        </AlertDialogFooter>
-                      </AlertDialogContent>
-                    </AlertDialog>
-                </li>
-              ))}
-            </ul>
-          ) : (
-            <p className="text-center text-sm text-muted-foreground py-4">No activities added yet.</p>
-          )}
-        </CardContent>
-      </Card>
 
       <Card>
           <CardHeader>
