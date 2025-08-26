@@ -226,7 +226,7 @@ export default function TripPlansPage() {
                                             <CardTitle className="text-lg">Budget & Cost</CardTitle>
                                        </CardHeader>
                                        <CardContent className="text-sm space-y-2">
-                                            <p><strong>Budget Range:</strong> {planDetails.plan?.budget_range_min && planDetails.plan?.budget_range_max ? `LKR ${planDetails.plan.budget_range_min} - ${planDetails.plan.budget_range_max}` : 'N/A'}</p>
+                                            <p><strong>Budget Range:</strong> {planDetails.plan?.budget_range ? `LKR ${planDetails.plan.budget_range}` : 'N/A'}</p>
                                             <p><strong>Estimated Cost:</strong> LKR {planDetails.plan?.estimated_cost ? parseFloat(planDetails.plan.estimated_cost).toFixed(2) : 'N/A'}</p>
                                        </CardContent>
                                    </Card>
