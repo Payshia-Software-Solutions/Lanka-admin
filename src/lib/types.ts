@@ -7,6 +7,7 @@ export interface Activity {
   description: string;
   location: string;
   duration: number;
+  image_url?: string;
 }
 // Represents one "Thing to Do" for a destination
 export interface ThingToDo {

@@ -1,7 +1,8 @@
 
 "use client";
 
-import { useState, useEffect, type FormEvent } from "react";
+import { useState, useEffect, type FormEvent, type ChangeEvent } from "react";
+import Image from "next/image";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import {
@@ -34,15 +35,8 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { PlusCircle, Loader2, Trash2 } from "lucide-react";
+import type { Activity } from "@/lib/types";
 
-interface Activity {
-  id: number;
-  company_id: number;
-  name: string;
-  description: string;
-  location: string;
-  duration: number;
-}
 
 export default function ActivitiesPage() {
   const { toast } = useToast();
@@ -54,6 +48,7 @@ export default function ActivitiesPage() {
     description: "",
     location: "",
     duration: "",
+    image: null as File | null,
   });
 
   const companyId =
@@ -94,25 +89,37 @@ export default function ActivitiesPage() {
   useEffect(() => {
     fetchActivities();
   }, [companyId]);
+  
+  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    if (event.target.files && event.target.files[0]) {
+      setNewActivity({ ...newActivity, image: event.target.files[0] });
+    }
+  };
 
   const handleAddActivity = async (event: FormEvent) => {
     event.preventDefault();
     if (!newActivity.name.trim() || !companyId) return;
 
     setIsSubmitting(true);
+    const formData = new FormData();
+    formData.append('name', newActivity.name);
+    formData.append('description', newActivity.description);
+    formData.append('location', newActivity.location);
+    formData.append('duration', newActivity.duration);
+    formData.append('company_id', companyId.toString());
+    if (newActivity.image) {
+      formData.append('image', newActivity.image);
+    }
+
     try {
       const response = await fetch("http://localhost/travel_web_server/activities", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...newActivity,
-          company_id: companyId,
-          duration: parseInt(newActivity.duration, 10) || null,
-        }),
+        body: formData,
       });
+
       if (response.ok) {
         toast({ title: "Success", description: "Activity added." });
-        setNewActivity({ name: "", description: "", location: "", duration: "" });
+        setNewActivity({ name: "", description: "", location: "", duration: "", image: null });
         fetchActivities(); // Refresh list
       } else {
         const errorData = await response.json();
@@ -215,18 +222,30 @@ export default function ActivitiesPage() {
                 disabled={isSubmitting}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="activity-duration">Duration (Days)</Label>
-              <Input
-                id="activity-duration"
-                type="number"
-                placeholder="e.g., 1"
-                value={newActivity.duration}
-                onChange={(e) =>
-                  setNewActivity({ ...newActivity, duration: e.target.value })
-                }
-                disabled={isSubmitting}
-              />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                <Label htmlFor="activity-duration">Duration (Days)</Label>
+                <Input
+                    id="activity-duration"
+                    type="number"
+                    placeholder="e.g., 1"
+                    value={newActivity.duration}
+                    onChange={(e) =>
+                    setNewActivity({ ...newActivity, duration: e.target.value })
+                    }
+                    disabled={isSubmitting}
+                />
+                </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="activity-image">Image</Label>
+                    <Input 
+                        id="activity-image"
+                        type="file"
+                        onChange={handleFileChange}
+                        disabled={isSubmitting}
+                        accept="image/png, image/jpeg, image/webp"
+                    />
+                </div>
             </div>
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? (
@@ -254,20 +273,35 @@ export default function ActivitiesPage() {
                 <Table>
                     <TableHeader>
                         <TableRow>
+                            <TableHead>Image</TableHead>
                             <TableHead>Name</TableHead>
                             <TableHead>Location</TableHead>
                             <TableHead>Duration (Days)</TableHead>
-                             <TableHead>Description</TableHead>
+                            <TableHead>Description</TableHead>
                             <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
                         {activities.map((activity) => (
                              <TableRow key={activity.id}>
+                                <TableCell>
+                                    {activity.image_url ? (
+                                        <Image
+                                            src={`https://content-provider.payshia.com/travel-web/${activity.image_url}`}
+                                            alt={activity.name}
+                                            width={64}
+                                            height={64}
+                                            data-ai-hint="activity image"
+                                            className="rounded-md object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-16 h-16 bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground">No Image</div>
+                                    )}
+                                </TableCell>
                                 <TableCell className="font-medium">{activity.name}</TableCell>
                                 <TableCell>{activity.location}</TableCell>
                                 <TableCell>{activity.duration}</TableCell>
-                                <TableCell className="text-muted-foreground max-w-sm truncate">{activity.description}</TableCell>
+                                <TableCell className="text-muted-foreground max-w-xs truncate">{activity.description}</TableCell>
                                 <TableCell className="text-right">
                                     <AlertDialog>
                                         <AlertDialogTrigger asChild>
