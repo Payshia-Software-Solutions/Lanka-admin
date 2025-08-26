@@ -4,6 +4,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -100,7 +101,7 @@ export interface TripPlan {
   adults: number;
   children: number;
   infants: number;
-  duration: number;
+  duration?: number; // duration is now optional as it can be calculated
   pace: string;
   additional_requests: string | null;
   status: string;
