@@ -2,8 +2,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -19,55 +17,98 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { PlusCircle, MoreHorizontal, Edit, Trash2, Loader2, Plane } from "lucide-react";
+import { Loader2, ChevronDown, User, Calendar, MapPin, Bus, Smile, Plus, Star, Bed } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import type { TripPlan } from "@/lib/types";
+import type { TripPlan, TripPlanDetails } from "@/lib/types";
+import { Button } from "@/components/ui/button";
+import { format } from "date-fns";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 
-const LOCAL_STORAGE_KEY = "LANKA_ADMIN_TRIP_PLANS";
+async function fetchTripPlanDetails(tripId: number): Promise<TripPlanDetails> {
+    const urls = {
+        plan: `http://localhost/travel_web_server/trip_plans/${tripId}`,
+        activities: `http://localhost/travel_web_server/trip_activities/${tripId}`,
+        destinations: `http://localhost/travel_web_server/trip_destinations/${tripId}`,
+        transportations: `http://localhost/travel_web_server/trip_transportations/trip/${tripId}`,
+        interests: `http://localhost/travel_web_server/trip_interests/${tripId}`,
+        addons: `http://localhost/travel_web_server/trip_addons/trip/${tripId}`,
+        amenities: `http://localhost/travel_web_server/trip_amenities/trip/${tripId}`,
+    };
+
+    const responses = await Promise.all(Object.values(urls).map(url => fetch(url).then(res => res.json())));
+    const [plan, activities, destinations, transportations, interests, addons, amenities] = responses;
+    
+    let user = null;
+    if (plan && plan.user_id) {
+       const userRes = await fetch(`http://localhost/travel_web_server/users/${plan.user_id}`);
+       if(userRes.ok) {
+           user = await userRes.json();
+       }
+    }
+
+    return { plan, user, activities, destinations, transportations, interests, addons, amenities };
+}
+
 
 export default function TripPlansPage() {
   const [tripPlans, setTripPlans] = useState<TripPlan[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const { toast } = useToast();
+  const [selectedPlanId, setSelectedPlanId] = useState<number | null>(null);
+  const [isDetailsLoading, setIsDetailsLoading] = useState(false);
+  const [planDetails, setPlanDetails] = useState<TripPlanDetails | null>(null);
+
+  const fetchTripPlans = async () => {
+    setIsLoading(true);
+    try {
+        const response = await fetch("http://localhost/travel_web_server/trip_plans");
+        if (!response.ok) {
+            throw new Error("Failed to fetch trip plans");
+        }
+        const data = await response.json();
+        setTripPlans(Array.isArray(data) ? data : []);
+    } catch (error) {
+        console.error("Error fetching trip plans:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load trip plans."
+        });
+        setTripPlans([]);
+    } finally {
+        setIsLoading(false);
+    }
+  };
 
   useEffect(() => {
-    setIsLoading(true);
-    if (typeof window !== 'undefined') {
-      const storedPlansRaw = localStorage.getItem(LOCAL_STORAGE_KEY);
-      if (storedPlansRaw) {
-        try {
-          const storedPlans = JSON.parse(storedPlansRaw).map((p: any) => ({
-            ...p,
-            createdAt: new Date(p.createdAt),
-            updatedAt: new Date(p.updatedAt),
-          }));
-          setTripPlans(storedPlans);
-        } catch (error) {
-          console.error("Error parsing trip plans from localStorage:", error);
-          setTripPlans([]);
-        }
+    fetchTripPlans();
+  }, []);
+  
+  const handleRowClick = async (planId: number) => {
+    if (selectedPlanId === planId) {
+      setSelectedPlanId(null); // Collapse if already open
+      setPlanDetails(null);
+    } else {
+      setSelectedPlanId(planId);
+      setIsDetailsLoading(true);
+      setPlanDetails(null);
+      try {
+        const details = await fetchTripPlanDetails(planId);
+        setPlanDetails(details);
+      } catch (error) {
+        console.error("Error fetching trip plan details:", error);
+        toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Could not load trip plan details."
+        });
+      } finally {
+        setIsDetailsLoading(false);
       }
     }
-    setIsLoading(false);
-  }, []);
-
-  const handleDelete = (planId: string) => {
-    const updatedPlans = tripPlans.filter((plan) => plan.id !== planId);
-    setTripPlans(updatedPlans);
-    localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(updatedPlans));
-    toast({
-      title: "Trip Plan Deleted",
-      description: "The trip plan has been successfully removed.",
-      variant: "destructive"
-    });
   };
+
 
   if (isLoading) {
     return (
@@ -81,79 +122,135 @@ export default function TripPlansPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold font-headline text-foreground">Trip Plan Management</h1>
-        <Button asChild>
-          <Link href="/admin/tripplans/new">
-            <PlusCircle className="mr-2 h-5 w-5" />
-            Create Trip Plan
-          </Link>
-        </Button>
+        <h1 className="text-3xl font-bold font-headline text-foreground">Client Trip Plans</h1>
       </div>
 
       <Card className="shadow-lg">
         <CardHeader>
-          <CardTitle className="font-headline text-xl">All Trip Plans</CardTitle>
-          <CardDescription>Manage custom trip itineraries for your clients.</CardDescription>
+          <CardTitle className="font-headline text-xl">All Submitted Plans</CardTitle>
+          <CardDescription>Review custom trip itineraries submitted by your clients.</CardDescription>
         </CardHeader>
         <CardContent>
           {tripPlans.length > 0 ? (
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Title</TableHead>
-                  <TableHead>Duration (Days)</TableHead>
-                  <TableHead>Destinations</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Trip Dates</TableHead>
+                  <TableHead>Duration</TableHead>
+                  <TableHead>Travelers</TableHead>
+                  <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {tripPlans.map((plan) => (
-                  <TableRow key={plan.id}>
-                    <TableCell className="font-medium">{plan.title}</TableCell>
-                    <TableCell>{plan.durationDays}</TableCell>
-                    <TableCell className="text-muted-foreground max-w-sm truncate">
-                      {plan.destinations.join(', ')}
+                  <>
+                  <TableRow key={plan.id} onClick={() => handleRowClick(plan.id)} className="cursor-pointer">
+                    <TableCell className="font-medium">{plan.full_name}</TableCell>
+                    <TableCell>
+                      {format(new Date(plan.start_date), "MMM d, yyyy")} - {format(new Date(plan.end_date), "MMM d, yyyy")}
+                    </TableCell>
+                    <TableCell>{plan.duration} days</TableCell>
+                    <TableCell>
+                        {plan.number_of_adults} Adults
+                        {plan.number_of_children > 0 && `, ${plan.number_of_children} Children`}
                     </TableCell>
                     <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0">
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem asChild disabled>
-                              <Link href={`/admin/tripplans/${plan.id}/edit`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                <span>Edit</span>
-                              </Link>
-                          </DropdownMenuItem>
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                               <DropdownMenuItem onSelect={(e) => e.preventDefault()} className="text-destructive focus:text-destructive-foreground focus:bg-destructive">
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                <span>Delete</span>
-                              </DropdownMenuItem>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  This action will permanently delete "{plan.title}".
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => handleDelete(plan.id)} className="bg-destructive hover:bg-destructive/90">
-                                  Yes, delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                       <Button variant="ghost" size="icon">
+                           <ChevronDown className={`h-5 w-5 transition-transform ${selectedPlanId === plan.id ? 'rotate-180' : ''}`} />
+                       </Button>
                     </TableCell>
                   </TableRow>
+                   {selectedPlanId === plan.id && (
+                     <TableRow>
+                       <TableCell colSpan={5}>
+                         {isDetailsLoading && (
+                            <div className="flex justify-center items-center p-8">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                                <p className="ml-4">Loading details...</p>
+                            </div>
+                         )}
+                         {planDetails && !isDetailsLoading && (
+                           <div className="p-4 bg-secondary/30 rounded-lg space-y-6">
+
+                               {/* User & Trip Details */}
+                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                   <Card>
+                                       <CardHeader className="flex flex-row items-center gap-2">
+                                            <User className="h-5 w-5 text-primary" />
+                                            <CardTitle className="text-lg">Customer Details</CardTitle>
+                                       </CardHeader>
+                                       <CardContent className="text-sm space-y-2">
+                                            <p><strong>Name:</strong> {planDetails.user?.full_name}</p>
+                                            <p><strong>Email:</strong> {planDetails.user?.email}</p>
+                                            <p><strong>Phone:</strong> {planDetails.user?.phone_number}</p>
+                                       </CardContent>
+                                   </Card>
+                                    <Card>
+                                       <CardHeader className="flex flex-row items-center gap-2">
+                                            <Calendar className="h-5 w-5 text-primary" />
+                                            <CardTitle className="text-lg">Trip Overview</CardTitle>
+                                       </CardHeader>
+                                       <CardContent className="text-sm space-y-2">
+                                            <p><strong>Pace:</strong> <Badge variant="outline">{planDetails.plan?.pace}</Badge></p>
+                                            <p><strong>Interests:</strong> {planDetails.interests?.map(i => i.interest_name).join(', ')}</p>
+                                       </CardContent>
+                                   </Card>
+                               </div>
+
+                                {/* Destinations & Activities */}
+                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center gap-2"><MapPin className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Destinations</CardTitle></CardHeader>
+                                        <CardContent>
+                                          <ul className="list-disc list-inside text-sm">{planDetails.destinations?.map(d => <li key={d.id}>{d.destination_name}</li>)}</ul>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center gap-2"><Star className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Activities</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <ul className="list-disc list-inside text-sm">{planDetails.activities?.map(a => <li key={a.id}>{a.activity_name}</li>)}</ul>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                                
+                                {/* Transportation, Accommodation, Addons */}
+                                <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center gap-2"><Bus className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Transport</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm">{planDetails.transportations?.[0]?.transportation_type || 'Not specified'}</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center gap-2"><Bed className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Accommodation</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm">{planDetails.amenities?.map(a => a.amenity_name).join(', ') || 'Not specified'}</p>
+                                        </CardContent>
+                                    </Card>
+                                    <Card>
+                                        <CardHeader className="flex flex-row items-center gap-2"><Plus className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Add-ons</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <ul className="list-disc list-inside text-sm">{planDetails.addons?.map(a => <li key={a.id}>{a.addon_name}</li>)}</ul>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+
+                                {/* Additional Comments */}
+                                {planDetails.plan?.additional_requests && (
+                                     <Card>
+                                        <CardHeader><CardTitle className="text-lg">Additional Client Requests</CardTitle></CardHeader>
+                                        <CardContent>
+                                            <p className="text-sm text-muted-foreground">{planDetails.plan.additional_requests}</p>
+                                        </CardContent>
+                                    </Card>
+                                )}
+                           </div>
+                         )}
+                       </TableCell>
+                     </TableRow>
+                   )}
+                  </>
                 ))}
               </TableBody>
             </Table>
@@ -161,7 +258,7 @@ export default function TripPlansPage() {
             <div className="text-center py-10 text-muted-foreground">
               <Plane className="mx-auto h-12 w-12 text-gray-400" />
               <p className="mt-4 text-lg">No trip plans found.</p>
-              <p>Click "Create Trip Plan" to get started.</p>
+              <p>When clients create plans from the front-end, they will appear here.</p>
             </div>
           )}
         </CardContent>
@@ -169,3 +266,5 @@ export default function TripPlansPage() {
     </div>
   );
 }
+
+    

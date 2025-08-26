@@ -1,6 +1,5 @@
 
 
-
 export interface Activity {
   id: number;
   company_id: number;
@@ -87,14 +86,64 @@ export interface Package {
   updatedAt: Date;
 }
 
+// Main Trip Plan from the table
 export interface TripPlan {
-  id: string;
-  title: string;
-  description: string;
-  durationDays: number;
-  destinations: string[];
-  createdAt: Date;
-  updatedAt: Date;
+  id: number;
+  user_id: number;
+  full_name: string; // This seems to be joined in the main query
+  start_date: string;
+  end_date: string;
+  number_of_adults: number;
+  number_of_children: number;
+  duration: number;
+  pace: string;
+  additional_requests: string | null;
+  status: string;
+}
+
+// Detailed view types
+export interface TripActivity {
+    id: number;
+    activity_name: string;
+}
+export interface TripDestination {
+    id: number;
+    destination_name: string;
+}
+export interface TripTransportation {
+    id: number;
+    transportation_type: string;
+}
+export interface TripInterest {
+    id: number;
+    interest_name: string;
+}
+export interface TripAddon {
+    id: number;
+    addon_name: string;
+}
+export interface TripAmenity {
+    id: number;
+    amenity_name: string;
+}
+
+export interface UserForTripPlan {
+    id: number;
+    full_name: string;
+    email: string;
+    phone_number: string;
+}
+
+// A composite type for the detailed view
+export interface TripPlanDetails {
+    plan: TripPlan | null;
+    user: UserForTripPlan | null;
+    activities: TripActivity[];
+    destinations: TripDestination[];
+    transportations: TripTransportation[];
+    interests: TripInterest[];
+    addons: TripAddon[];
+    amenities: TripAmenity[];
 }
 
 export interface Itinerary {
@@ -183,3 +232,5 @@ export interface VehicleType {
   created_at: string;
   updated_at: string;
 }
+
+    
