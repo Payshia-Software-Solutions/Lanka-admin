@@ -3,6 +3,7 @@
 
 import * as React from "react";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   Card,
   CardContent,
@@ -30,6 +31,7 @@ import {
   Bed,
   Plane,
   DollarSign,
+  PlusCircle,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { TripPlan, TripPlanDetails } from "@/lib/types";
@@ -166,6 +168,12 @@ export default function TripPlansPage() {
         <h1 className="text-3xl font-bold font-headline text-foreground">
           Client Trip Plans
         </h1>
+        <Button asChild>
+          <Link href="/admin/tripplans/new">
+            <PlusCircle className="mr-2 h-5 w-5" />
+            Create Plan
+          </Link>
+        </Button>
       </div>
 
       <Card className="shadow-lg">

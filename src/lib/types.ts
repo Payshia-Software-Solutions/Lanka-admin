@@ -1,10 +1,4 @@
 
-
-
-
-
-
-
 export interface Activity {
   id: number;
   company_id: number;
@@ -13,6 +7,7 @@ export interface Activity {
   location: string;
   duration: number;
   image_url?: string;
+  category?: string;
 }
 // Represents one "Thing to Do" for a destination
 export interface ThingToDo {
@@ -37,7 +32,14 @@ export interface Website {
 }
 
 export interface Destination {
-  id: string | number; // Allow number for new items from DB
+  id: string;
+  name: string;
+  image: string;
+}
+
+
+export interface ApiDestination {
+  id: number; // Allow number for new items from DB
   name: string;
   description: string;
   location: string;
@@ -240,3 +242,4 @@ export interface VehicleType {
   created_at: string;
   updated_at: string;
 }
+
