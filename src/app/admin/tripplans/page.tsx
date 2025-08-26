@@ -140,7 +140,7 @@ export default function TripPlansPage() {
                   <TableHead>Trip Dates</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Travelers</TableHead>
-                  <TableHead>Budget (USD)</TableHead>
+                  <TableHead>Budget (LKR)</TableHead>
                   <TableHead className="text-right">Details</TableHead>
                 </TableRow>
               </TableHeader>
@@ -164,7 +164,7 @@ export default function TripPlansPage() {
                     </TableCell>
                      <TableCell>
                       {plan.budget_range_min && plan.budget_range_max ? (
-                        `$${plan.budget_range_min} - $${plan.budget_range_max}`
+                        `LKR ${plan.budget_range_min} - ${plan.budget_range_max}`
                       ) : 'N/A'}
                     </TableCell>
                     <TableCell className="text-right">
@@ -224,14 +224,14 @@ export default function TripPlansPage() {
                                             <CardTitle className="text-lg">Budget & Cost</CardTitle>
                                        </CardHeader>
                                        <CardContent className="text-sm space-y-2">
-                                            <p><strong>Budget Range:</strong> ${planDetails.plan?.budget_range_min} - ${planDetails.plan?.budget_range_max} USD</p>
-                                            <p><strong>Estimated Cost:</strong> ${planDetails.plan?.estimated_cost ? parseFloat(planDetails.plan.estimated_cost).toFixed(2) : 'N/A'} USD</p>
+                                            <p><strong>Budget Range:</strong> LKR {planDetails.plan?.budget_range_min} - {planDetails.plan?.budget_range_max}</p>
+                                            <p><strong>Estimated Cost:</strong> LKR {planDetails.plan?.estimated_cost ? parseFloat(planDetails.plan.estimated_cost).toFixed(2) : 'N/A'}</p>
                                        </CardContent>
                                    </Card>
                                </div>
 
                                 {/* Destinations & Activities */}
-                                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                     <Card>
                                         <CardHeader className="flex flex-row items-center gap-2"><MapPin className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Destinations</CardTitle></CardHeader>
                                         <CardContent>
