@@ -363,7 +363,7 @@ export default function TripPlansPage() {
                                   <CardContent>
                                     <p className="text-sm">
                                       {planDetails.transportations?.[0]
-                                        ?.transportation_type ||
+                                        ?.transport_method ||
                                         "Not specified"}
                                     </p>
                                   </CardContent>

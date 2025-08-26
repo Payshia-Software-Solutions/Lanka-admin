@@ -3,6 +3,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -103,10 +104,8 @@ export interface TripPlan {
   pace: string;
   additional_requests: string | null;
   status: string;
-  budget_range_min: number | null;
-  budget_range_max: number | null;
-  estimated_cost: string;
   budget_range: string;
+  estimated_cost: string;
 }
 
 // Detailed view types
@@ -120,7 +119,7 @@ export interface TripDestination {
 }
 export interface TripTransportation {
     id: number;
-    transportation_type: string;
+    transport_method: string;
 }
 export interface TripInterest {
     id: number;
