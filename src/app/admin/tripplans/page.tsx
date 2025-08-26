@@ -148,7 +148,7 @@ export default function TripPlansPage() {
                   <TableRow key={plan.id} onClick={() => handleRowClick(plan.id)} className="cursor-pointer">
                     <TableCell className="font-medium">{plan.full_name}</TableCell>
                     <TableCell>
-                      {format(new Date(plan.start_date), "MMM d, yyyy")} - {format(new Date(plan.end_date), "MMM d, yyyy")}
+                      {format(new Date(plan.start_date.replace(' ', 'T')), "MMM d, yyyy")} - {format(new Date(plan.end_date.replace(' ', 'T')), "MMM d, yyyy")}
                     </TableCell>
                     <TableCell>{plan.duration} days</TableCell>
                     <TableCell>
@@ -266,5 +266,3 @@ export default function TripPlansPage() {
     </div>
   );
 }
-
-    
