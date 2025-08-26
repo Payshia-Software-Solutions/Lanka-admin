@@ -11,3 +11,4 @@ export const destinations: Destination[] = [
 ];
 
 export { type Destination, type ApiDestination };
+
