@@ -355,6 +355,21 @@ export default function TripPlansPage() {
                                     </p>
                                   </CardContent>
                                 </Card>
+                                 <Card>
+                                  <CardHeader className="flex flex-row items-center gap-2">
+                                    <Bus className="h-5 w-5 text-primary" />
+                                    <CardTitle className="text-lg">
+                                      Transport
+                                    </CardTitle>
+                                  </CardHeader>
+                                  <CardContent>
+                                    <p className="text-sm">
+                                      {planDetails.transportations?.[0]
+                                        ?.transportation_type ||
+                                        "Not specified"}
+                                    </p>
+                                  </CardContent>
+                                </Card>
                               </div>
 
                               {/* Destinations & Activities */}
@@ -415,24 +430,8 @@ export default function TripPlansPage() {
                                 </Card>
                               </div>
 
-                              {/* Transportation, Accommodation, Addons */}
-                              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                                <Card>
-                                  <CardHeader className="flex flex-row items-center gap-2">
-                                    <Bus className="h-5 w-5 text-primary" />
-                                    <CardTitle className="text-lg">
-                                      Transport
-                                    </CardTitle>
-                                  </CardHeader>
-                                  <CardContent>
-                                    <p className="text-sm">
-                                      {planDetails.transportations?.[0]
-                                        ?.transportation_type ||
-                                        "Not specified"}
-                                    </p>
-                                  </CardContent>
-                                </Card>
-
+                              {/* Accommodation, Addons */}
+                              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                 <Card>
                                   <CardHeader className="flex flex-row items-center gap-2">
                                     <Bed className="h-5 w-5 text-primary" />
