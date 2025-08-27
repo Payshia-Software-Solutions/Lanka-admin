@@ -38,6 +38,7 @@ import type { TripPlan, TripPlanDetails } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { format, differenceInDays } from "date-fns";
 import { Separator } from "@/components/ui/separator";
+import { Badge } from "@/components/ui/badge";
 
 async function fetchTripPlanDetails(tripId: number): Promise<TripPlanDetails> {
   const urls = {
@@ -191,6 +192,7 @@ export default function TripPlansPage() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Customer</TableHead>
+                  <TableHead>Plan Type</TableHead>
                   <TableHead>Trip Dates</TableHead>
                   <TableHead>Duration</TableHead>
                   <TableHead>Travelers</TableHead>
@@ -210,6 +212,11 @@ export default function TripPlansPage() {
                       >
                         <TableCell className="font-medium">
                           {plan.full_name}
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant={plan.plan_type === 'custom-plan' ? 'secondary' : 'default'}>
+                            {plan.plan_type}
+                          </Badge>
                         </TableCell>
                         <TableCell>
                           {plan.from_date && plan.to_date
@@ -251,7 +258,7 @@ export default function TripPlansPage() {
 
                       {selectedPlanId === plan.id && (
                         <TableRow key={`details-${plan.id}`}>
-                          <TableCell colSpan={7}>
+                          <TableCell colSpan={8}>
                             {isDetailsLoading && (
                               <div className="flex justify-center items-center p-8">
                                 <Loader2 className="h-8 w-8 animate-spin text-primary" />

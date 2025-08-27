@@ -107,6 +107,7 @@ export interface TripPlan {
   pace: string;
   additional_requests: string | null;
   status: string;
+  plan_type?: 'pre-plan' | 'custom-plan';
   budget_range: string;
   estimated_cost: string;
 }

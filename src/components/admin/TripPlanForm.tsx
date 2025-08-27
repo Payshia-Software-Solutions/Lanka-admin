@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { cn } from '@/lib/utils';
-import { ArrowRight, Info, MapPin, Search, Calendar as CalendarIcon, Users, Minus, Plus, ArrowLeft, Check, Shield, Accessibility, Edit, Compass, MessageSquare, Diamond, X, Loader2 } from 'lucide-react';
+import { ArrowRight, Info, MapPin, Search, Calendar as CalendarIcon, Users, Minus, Plus, ArrowLeft, Check, Shield, Accessibility, Edit, Compass, MessageSquare, Diamond, X, Loader2, Package } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays } from 'date-fns';
@@ -16,6 +16,8 @@ import { Badge } from '@/components/ui/badge';
 import { destinations as hardcodedDestinations } from '@/lib/destinations';
 import { useToast } from "@/hooks/use-toast";
 import type { ApiDestination, Destination, Activity as ActivityType, User } from '@/lib/types';
+import { Label } from '../ui/label';
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
 
 const steps = [
@@ -87,7 +89,7 @@ export interface TripPlanFormData {
   infants: number;
   accommodation_type: string | null;
   budget_range: string | null;
-  status: string;
+  plan_type: 'pre-plan' | 'custom-plan';
   estimated_cost: number;
   destinations: { id: string | number; name: string }[];
   interests: string[];
@@ -95,8 +97,6 @@ export interface TripPlanFormData {
   amenities: string[];
   addons: string[];
   transportation: string[];
-  full_name: string;
-  email: string;
 }
 
 
@@ -121,6 +121,7 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   const [selectedAmenities, setSelectedAmenities] = useState<string[]>([]);
   const [selectedTransportation, setSelectedTransportation] = useState<string[]>([]);
   const [selectedAddons, setSelectedAddons] = useState<string[]>([]);
+  const [planType, setPlanType] = useState<'pre-plan' | 'custom-plan'>('pre-plan');
   
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredDestinations, setFilteredDestinations] = useState<CombinedDestination[]>([]);
@@ -129,9 +130,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   const [isDestinationListOpen, setIsDestinationListOpen] = useState(false);
   const [allActivities, setAllActivities] = useState<ActivityType[]>([]);
   const { toast } = useToast();
-  
-  const [fullName, setFullName] = useState("");
-  const [email, setEmail] = useState("");
   
   const [allUsers, setAllUsers] = useState<User[]>([]);
 
@@ -340,32 +338,18 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         return;
     }
 
-    if (!loggedInUser || !loggedInUser.company_id) {
+    if (!loggedInUser || !loggedInUser.id || !loggedInUser.company_id) {
          toast({
             variant: "destructive",
             title: "Authentication Error",
-            description: "Company ID is missing from your profile. Please log in again.",
-        });
-        return;
-    }
-
-    const adminUser = allUsers.find(u => 
-        u.role === 'admin' && 
-        (u as any).company_id?.toString() === loggedInUser.company_id.toString()
-    );
-
-    if (!adminUser) {
-        toast({
-            variant: "destructive",
-            title: "Authorization Error",
-            description: "Could not find a valid admin user for your company to create the plan.",
+            description: "User ID or Company ID is missing from your profile. Please log in again.",
         });
         return;
     }
 
     const tripPlanData: TripPlanFormData = {
         company_id: loggedInUser.company_id, 
-        user_id: adminUser.id,
+        user_id: loggedInUser.id,
         from_date: fromDate ? format(fromDate, 'yyyy-MM-dd') : null,
         to_date: toDate ? format(toDate, 'yyyy-MM-dd') : null,
         adults: adults,
@@ -373,7 +357,7 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         infants: infants,
         accommodation_type: selectedAccommodation,
         budget_range: selectedBudget,
-        status: 'pending',
+        plan_type: planType,
         estimated_cost: estimatedCost,
         destinations: selectedDestinations.map(dest => {
             const id = 'hero_bg_image_url' in dest ? dest.id : parseInt(dest.id.split('-')[1], 10);
@@ -384,8 +368,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         amenities: selectedAmenities,
         addons: selectedAddons,
         transportation: selectedTransportation,
-        full_name: fullName,
-        email: email,
     };
     
     await onSubmitForm(tripPlanData);
@@ -483,29 +465,6 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         <div className="p-8">
             {currentStep === 1 && (
             <div className="space-y-8">
-                <div className="grid md:grid-cols-2 gap-6">
-                    <div>
-                        <label className="font-semibold">Full Name</label>
-                        <Input 
-                            type="text" 
-                            placeholder="Enter client's full name" 
-                            value={fullName}
-                            onChange={(e) => setFullName(e.target.value)}
-                            className="mt-2"
-                        />
-                    </div>
-                     <div>
-                        <label className="font-semibold">Email</label>
-                        <Input 
-                            type="email" 
-                            placeholder="Enter client's email" 
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="mt-2"
-                        />
-                    </div>
-                </div>
-
                 <div>
                 <h2 className="text-2xl font-headline font-semibold flex items-center gap-2 mb-6">
                     <MapPin className="text-primary" />
@@ -608,6 +567,28 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
                         <NumberInput label="Children" description="2-17 years" value={children} onDecrement={() => setChildren(v => v > 0 ? v - 1 : 0)} onIncrement={() => setChildren(v => v + 1)} />
                         <NumberInput label="Infants" description="Under 2" value={infants} onDecrement={() => setInfants(v => v > 0 ? v - 1 : 0)} onIncrement={() => setInfants(v => v + 1)} />
                     </div>
+                </div>
+
+                <div>
+                  <h2 className="text-2xl font-headline font-semibold flex items-center gap-2 mb-6">
+                      <Package className="text-primary" />
+                      What type of plan is this?
+                  </h2>
+                   <div className="w-full md:w-1/2">
+                    <Label htmlFor="plan-type">Plan Type</Label>
+                    <Select
+                      value={planType}
+                      onValueChange={(value: 'pre-plan' | 'custom-plan') => setPlanType(value)}
+                    >
+                      <SelectTrigger id="plan-type" className="mt-2 h-12">
+                        <SelectValue placeholder="Select a plan type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pre-plan">Pre-plan</SelectItem>
+                        <SelectItem value="custom-plan">Custom Plan</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
 
                 <div className="flex justify-end mt-8">
@@ -915,4 +896,3 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     </div>
   );
 }
-
