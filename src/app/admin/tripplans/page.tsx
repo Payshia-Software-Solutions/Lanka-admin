@@ -431,10 +431,10 @@ export default function TripPlansPage() {
                               <CardContent>
                                 <div className="space-y-2 text-sm">
                                   {planDetails.plan?.accommodation_type && (
-                                      <p>
+                                      <div>
                                           <strong>Type:</strong>{" "}
                                           <Badge variant="secondary">{planDetails.plan.accommodation_type}</Badge>
-                                      </p>
+                                      </div>
                                   )}
                                   {planDetails.amenities && planDetails.amenities.length > 0 && (
                                     <div>
