@@ -23,6 +23,7 @@ import {
   Newspaper,
   Footprints,
   Plane,
+  Receipt,
 } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -61,6 +62,7 @@ const navItems = [
   { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
   { href: '/admin/users', label: 'Users & Roles', icon: Users },
   { href: '/admin/pricing-suggestions', label: 'AI Pricing', icon: DollarSign },
+  { href: '/admin/costing', label: 'Costing', icon: Receipt },
 ];
 
 interface UserProfile {

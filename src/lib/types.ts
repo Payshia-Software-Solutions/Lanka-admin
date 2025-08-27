@@ -244,3 +244,10 @@ export interface VehicleType {
   created_at: string;
   updated_at: string;
 }
+
+export interface Costing {
+    budgetRanges: Record<string, number>;
+    activities: Record<string, number>;
+    transportation: Record<string, number>;
+    amenities: Record<string, number>;
+}
