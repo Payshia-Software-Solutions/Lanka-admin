@@ -1,64 +1,54 @@
--- This script is for reference and to guide the database setup.
--- It assumes you have existing tables: `accommodation_types`, `activities`, and a way to define transport methods.
+-- This script creates tables to manage the costs for various trip components.
+-- These costs are company-specific and will be used for trip plan estimations.
 
--- ---------------------------------
--- 1. Accommodation Costing Table
--- ---------------------------------
--- Stores the cost per night for different accommodation types.
--- This links to your existing `accommodation_types` table.
+-- Table to store costs for different accommodation budget ranges.
+CREATE TABLE IF NOT EXISTS accommodation_budget_costs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    budget_range VARCHAR(255) NOT NULL,
+    cost_per_day DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY (company_id, budget_range)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-CREATE TABLE `accommodation_costs` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `accommodation_type_id` INT NOT NULL,
-  `cost_per_night` DECIMAL(10, 2) NOT NULL,
-  `currency` VARCHAR(3) NOT NULL DEFAULT 'LKR',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`accommodation_type_id`) REFERENCES `accommodation_types`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+-- Table to store costs for specific activities.
+-- This links to your existing 'activities' table.
+CREATE TABLE IF NOT EXISTS activity_costs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    activity_id INT NOT NULL,
+    cost_per_person DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
+    UNIQUE KEY (company_id, activity_id)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Example Insert:
--- INSERT INTO `accommodation_costs` (accommodation_type_id, cost_per_night) VALUES (1, 8000.00);
+-- Table to store costs for different transportation types.
+CREATE TABLE IF NOT EXISTS transportation_costs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    transport_type VARCHAR(255) NOT NULL,
+    cost_per_day DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY (company_id, transport_type)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
-
--- -----------------------------
--- 2. Activity Costing Table
--- -----------------------------
--- Stores the cost per person for each activity.
--- This links to your existing `activities` table.
-
-CREATE TABLE `activity_costs` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `activity_id` INT NOT NULL,
-  `cost_per_person` DECIMAL(10, 2) NOT NULL,
-  `currency` VARCHAR(3) NOT NULL DEFAULT 'LKR',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`activity_id`) REFERENCES `activities`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Example Insert:
--- INSERT INTO `activity_costs` (activity_id, cost_per_person) VALUES (1, 2500.00);
-
-
--- ------------------------------------
--- 3. Transportation Costing Table
--- ------------------------------------
--- A more generic table to hold costs for different transport methods.
--- Since there isn't a dedicated transport_options table, this uses a unique name for each method.
-
-CREATE TABLE `transportation_costs` (
-  `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `company_id` INT NOT NULL,
-  `transport_method_name` VARCHAR(255) NOT NULL UNIQUE,
-  `cost_per_day` DECIMAL(10, 2) NOT NULL,
-  `currency` VARCHAR(3) NOT NULL DEFAULT 'LKR',
-  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  FOREIGN KEY (`company_id`) REFERENCES `companies`(`id`) ON DELETE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
-
--- Example Insert:
--- INSERT INTO `transportation_costs` (company_id, transport_method_name, cost_per_day) VALUES (1, 'Rental Car', 6000.00);
--- INSERT INTO `transportation_costs` (company_id, transport_method_name, cost_per_day) VALUES (1, 'Rental Van', 9000.00);
+-- Table to store costs for accommodation amenities.
+CREATE TABLE IF NOT EXISTS amenity_costs (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    company_id INT NOT NULL,
+    amenity_name VARCHAR(255) NOT NULL,
+    cost DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    cost_type ENUM('per_day', 'one_time') NOT NULL DEFAULT 'one_time',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
+    UNIQUE KEY (company_id, amenity_name)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
