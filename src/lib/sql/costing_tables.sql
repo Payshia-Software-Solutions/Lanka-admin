@@ -1,54 +1,49 @@
--- This script creates tables to manage the costs for various trip components.
--- These costs are company-specific and will be used for trip plan estimations.
+-- Drop existing tables if they exist to avoid conflicts.
+DROP TABLE IF EXISTS accommodation_budget_costs;
+DROP TABLE IF EXISTS activity_costs;
+DROP TABLE IF EXISTS transportation_costs;
+DROP TABLE IF EXISTS amenity_costs;
+DROP TABLE IF EXISTS cost_settings;
 
--- Table to store costs for different accommodation budget ranges.
-CREATE TABLE IF NOT EXISTS accommodation_budget_costs (
+-- A single table to hold all types of cost settings for a company.
+-- The 'costs' column will store a JSON object mapping item names to their price.
+-- e.g., for activities: {"Whale Watching": 5000, "Safari": 7500}
+-- e.g., for budget ranges: {"Less than LKR 3000": 2500, "LKR 3000-5000": 4500}
+CREATE TABLE cost_settings (
     id INT AUTO_INCREMENT PRIMARY KEY,
     company_id INT NOT NULL,
-    budget_range VARCHAR(255) NOT NULL,
-    cost_per_day DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
+    cost_type VARCHAR(50) NOT NULL COMMENT 'e.g., budgetRanges, activities, transportation, amenities',
+    costs JSON NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    UNIQUE KEY (company_id, budget_range)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+    UNIQUE KEY (company_id, cost_type),
+    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE
+);
 
--- Table to store costs for specific activities.
--- This links to your existing 'activities' table.
-CREATE TABLE IF NOT EXISTS activity_costs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    company_id INT NOT NULL,
-    activity_id INT NOT NULL,
-    cost_per_person DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    FOREIGN KEY (activity_id) REFERENCES activities(id) ON DELETE CASCADE,
-    UNIQUE KEY (company_id, activity_id)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Table to store costs for different transportation types.
-CREATE TABLE IF NOT EXISTS transportation_costs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    company_id INT NOT NULL,
-    transport_type VARCHAR(255) NOT NULL,
-    cost_per_day DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    UNIQUE KEY (company_id, transport_type)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Table to store costs for accommodation amenities.
-CREATE TABLE IF NOT EXISTS amenity_costs (
-    id INT AUTO_INCREMENT PRIMARY KEY,
-    company_id INT NOT NULL,
-    amenity_name VARCHAR(255) NOT NULL,
-    cost DECIMAL(10, 2) NOT NULL DEFAULT 0.00,
-    cost_type ENUM('per_day', 'one_time') NOT NULL DEFAULT 'one_time',
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    FOREIGN KEY (company_id) REFERENCES companies(id) ON DELETE CASCADE,
-    UNIQUE KEY (company_id, amenity_name)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
+-- Example of how you might insert data for a specific company (e.g., company_id = 1)
+-- You would run these from your backend API when the admin saves the costing form.
+/*
+INSERT INTO cost_settings (company_id, cost_type, costs)
+VALUES
+(1, 'budgetRanges', '{
+    "Less than LKR 3000": 2000,
+    "LKR 3000-5000": 4000,
+    "LKR 5000-8000": 6500,
+    "LKR 8000-10,000": 9000,
+    "LKR 10,000 to Above": 12000
+}'),
+(1, 'activities', '{
+    "Whale Watching": 7500,
+    "Surfing Lesson": 2500
+}'),
+(1, 'transportation', '{
+    "Rental Car": 6000,
+    "Rental Van": 8000
+}'),
+(1, 'amenities', '{
+    "Free WiFi": 0,
+    "Pool": 1000,
+    "Breakfast": 1500
+}')
+ON DUPLICATE KEY UPDATE costs = VALUES(costs);
+*/
