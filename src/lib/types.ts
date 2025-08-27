@@ -212,7 +212,7 @@ export interface User {
   name: string;
   email: string;
   role: UserRole;
-  company_id?: string | number;
+  company_id: string | number;
 }
 
 export interface Hotel {

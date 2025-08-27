@@ -338,7 +338,7 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         return;
     }
 
-    if (!loggedInUser || !loggedInUser.id || !loggedInUser.company_id) {
+    if (!loggedInUser || !loggedInUser.company_id) {
          toast({
             variant: "destructive",
             title: "Authentication Error",
@@ -347,9 +347,26 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
         return;
     }
 
+    // Find the admin user from the fetched list
+    const adminUser = allUsers.find(
+      (user) =>
+        user.company_id?.toString() === loggedInUser.company_id?.toString() &&
+        user.role === 'admin'
+    );
+
+    if (!adminUser) {
+       toast({
+            variant: "destructive",
+            title: "Authorization Error",
+            description: "Could not find a valid admin user for your company to create this plan.",
+        });
+        return;
+    }
+
+
     const tripPlanData: TripPlanFormData = {
         company_id: loggedInUser.company_id, 
-        user_id: loggedInUser.id,
+        user_id: adminUser.id,
         from_date: fromDate ? format(fromDate, 'yyyy-MM-dd') : null,
         to_date: toDate ? format(toDate, 'yyyy-MM-dd') : null,
         adults: adults,
