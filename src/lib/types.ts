@@ -1,4 +1,5 @@
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -110,6 +111,7 @@ export interface TripPlan {
   plan_type?: 'pre-plan' | 'custom-plan';
   budget_range: string;
   estimated_cost: string;
+  accommodation_type?: string;
 }
 
 // Detailed view types

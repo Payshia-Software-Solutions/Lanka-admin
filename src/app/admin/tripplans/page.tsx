@@ -1,4 +1,5 @@
 
+
 "use client";
 
 import * as React from "react";
@@ -428,22 +429,35 @@ export default function TripPlansPage() {
                             <Card>
                               <CardHeader className="flex flex-row items-center gap-2"><Bed className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Accommodation</CardTitle></CardHeader>
                               <CardContent>
-                                <ul className="list-disc list-inside text-sm">
-                                  {planDetails.amenities?.map(
-                                    (a: any, idx: number) => (
-                                      <li
-                                        key={
-                                          a?.id ??
-                                          `amenity-${
-                                            a?.amenity_name ?? "unknown"
-                                          }-${idx}`
-                                        }
-                                      >
-                                        {a?.amenity_name}
-                                      </li>
-                                    )
+                                <div className="space-y-2 text-sm">
+                                  {planDetails.plan?.accommodation_type && (
+                                      <p>
+                                          <strong>Type:</strong>{" "}
+                                          <Badge variant="secondary">{planDetails.plan.accommodation_type}</Badge>
+                                      </p>
                                   )}
-                                </ul>
+                                  {planDetails.amenities && planDetails.amenities.length > 0 && (
+                                    <div>
+                                      <strong>Amenities:</strong>
+                                      <ul className="list-disc list-inside mt-1">
+                                          {planDetails.amenities?.map(
+                                          (a: any, idx: number) => (
+                                              <li
+                                              key={
+                                                  a?.id ??
+                                                  `amenity-${
+                                                  a?.amenity_name ?? "unknown"
+                                                  }-${idx}`
+                                              }
+                                              >
+                                              {a?.amenity_name}
+                                              </li>
+                                          )
+                                          )}
+                                      </ul>
+                                    </div>
+                                  )}
+                                </div>
                               </CardContent>
                             </Card>
 
@@ -564,4 +578,3 @@ export default function TripPlansPage() {
     </div>
   );
 }
-
