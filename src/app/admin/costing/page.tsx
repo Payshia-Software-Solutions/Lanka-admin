@@ -9,6 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Activity } from "@/lib/types";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
+
 
 const budgetRanges = [
     'Less than LKR 3000',
@@ -223,118 +225,151 @@ export default function CostingPage() {
                   {isSubmitting ? <Loader2 className="animate-spin" /> : "Save All Costs"}
                 </Button>
             </div>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Accommodation & Budget Costs</CardTitle>
-                    <CardDescription>Set the per-day cost for different accommodation budget ranges.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {budgetRanges.map(range => (
-                        <div key={range} className="space-y-2">
-                            <Label htmlFor={`budget-${range}`}>{range}</Label>
-                            <Input 
-                                id={`budget-${range}`}
-                                type="number"
-                                placeholder="e.g., 5000"
-                                value={costing.budget_range_costs[range] || ""}
-                                onChange={(e) => handleCostChange('budget_range_costs', range, e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Accommodation Type Costs</CardTitle>
-                    <CardDescription>Set additional costs for each accommodation type. These will be stored with amenities.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {accommodationCostTypes.map(type => (
-                        <div key={type} className="space-y-2">
-                            <Label htmlFor={`accommodation-type-${type}`}>{type}</Label>
-                            <Input 
-                                id={`accommodation-type-${type}`}
-                                type="number"
-                                placeholder="e.g., 1000"
-                                value={costing.amenity_costs[type] || ""}
-                                onChange={(e) => handleCostChange('amenity_costs', type, e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Amenity Costs</CardTitle>
-                    <CardDescription>Set additional costs for each amenity, if any.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {amenities.map(amenity => (
-                        <div key={amenity} className="space-y-2">
-                            <Label htmlFor={`amenity-${amenity}`}>{amenity}</Label>
-                            <Input 
-                                id={`amenity-${amenity}`}
-                                type="number"
-                                placeholder="e.g., 500"
-                                value={costing.amenity_costs[amenity] || ""}
-                                onChange={(e) => handleCostChange('amenity_costs', amenity, e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
-
-            <Card>
-                <CardHeader>
-                    <CardTitle>Activity Costs</CardTitle>
-                    <CardDescription>Set the cost per person for each available activity.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {allActivities.length > 0 ? allActivities.map(activity => (
-                         <div key={activity.id} className="space-y-2">
-                            <Label htmlFor={`activity-${activity.id}`}>{activity.name}</Label>
-                            <Input 
-                                id={`activity-${activity.id}`}
-                                type="number"
-                                placeholder="e.g., 2500"
-                                value={costing.activity_costs[activity.name] || ""}
-                                onChange={(e) => handleCostChange('activity_costs', activity.name, e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    )) : (
-                        <p className="text-muted-foreground col-span-full text-center">No activities found. Please add activities first.</p>
-                    )}
-                </CardContent>
-            </Card>
             
-            <Card>
-                <CardHeader>
-                    <CardTitle>Transportation Costs</CardTitle>
-                    <CardDescription>Set the per-day cost for different transportation types.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {transportationOptions.map(option => (
-                        <div key={option} className="space-y-2">
-                            <Label htmlFor={`transport-${option}`}>{option}</Label>
-                            <Input 
-                                id={`transport-${option}`}
-                                type="number"
-                                placeholder="e.g., 7000"
-                                value={costing.transportation_costs[option] || ""}
-                                onChange={(e) => handleCostChange('transportation_costs', option, e.target.value)}
-                                disabled={isSubmitting}
-                            />
-                        </div>
-                    ))}
-                </CardContent>
-            </Card>
+            <Accordion type="multiple" defaultValue={["item-1"]} className="w-full space-y-4">
+                <AccordionItem value="item-1" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                            <CardHeader className="p-0 text-left">
+                                <CardTitle>Accommodation & Budget Costs</CardTitle>
+                                <CardDescription>Set the per-day cost for different accommodation budget ranges.</CardDescription>
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {budgetRanges.map(range => (
+                                    <div key={range} className="space-y-2">
+                                        <Label htmlFor={`budget-${range}`}>{range}</Label>
+                                        <Input 
+                                            id={`budget-${range}`}
+                                            type="number"
+                                            placeholder="e.g., 5000"
+                                            value={costing.budget_range_costs[range] || ""}
+                                            onChange={(e) => handleCostChange('budget_range_costs', range, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+
+                <AccordionItem value="item-2" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                           <CardHeader className="p-0 text-left">
+                                <CardTitle>Accommodation Type Costs</CardTitle>
+                                <CardDescription>Set additional costs for each accommodation type. These will be stored with amenities.</CardDescription>
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {accommodationCostTypes.map(type => (
+                                    <div key={type} className="space-y-2">
+                                        <Label htmlFor={`accommodation-type-${type}`}>{type}</Label>
+                                        <Input 
+                                            id={`accommodation-type-${type}`}
+                                            type="number"
+                                            placeholder="e.g., 1000"
+                                            value={costing.amenity_costs[type] || ""}
+                                            onChange={(e) => handleCostChange('amenity_costs', type, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+                
+                 <AccordionItem value="item-3" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                           <CardHeader className="p-0 text-left">
+                                <CardTitle>Amenity Costs</CardTitle>
+                                <CardDescription>Set additional costs for each amenity, if any.</CardDescription>
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {amenities.map(amenity => (
+                                    <div key={amenity} className="space-y-2">
+                                        <Label htmlFor={`amenity-${amenity}`}>{amenity}</Label>
+                                        <Input 
+                                            id={`amenity-${amenity}`}
+                                            type="number"
+                                            placeholder="e.g., 500"
+                                            value={costing.amenity_costs[amenity] || ""}
+                                            onChange={(e) => handleCostChange('amenity_costs', amenity, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+
+                 <AccordionItem value="item-4" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                           <CardHeader className="p-0 text-left">
+                                <CardTitle>Activity Costs</CardTitle>
+                                <CardDescription>Set the cost per person for each available activity.</CardDescription>
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {allActivities.length > 0 ? allActivities.map(activity => (
+                                     <div key={activity.id} className="space-y-2">
+                                        <Label htmlFor={`activity-${activity.id}`}>{activity.name}</Label>
+                                        <Input 
+                                            id={`activity-${activity.id}`}
+                                            type="number"
+                                            placeholder="e.g., 2500"
+                                            value={costing.activity_costs[activity.name] || ""}
+                                            onChange={(e) => handleCostChange('activity_costs', activity.name, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                )) : (
+                                    <p className="text-muted-foreground col-span-full text-center">No activities found. Please add activities first.</p>
+                                )}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+
+                <AccordionItem value="item-5" className="border-none">
+                    <Card>
+                        <AccordionTrigger className="p-6 hover:no-underline">
+                           <CardHeader className="p-0 text-left">
+                                <CardTitle>Transportation Costs</CardTitle>
+                                <CardDescription>Set the per-day cost for different transportation types.</CardDescription>
+                            </CardHeader>
+                        </AccordionTrigger>
+                        <AccordionContent>
+                           <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {transportationOptions.map(option => (
+                                    <div key={option} className="space-y-2">
+                                        <Label htmlFor={`transport-${option}`}>{option}</Label>
+                                        <Input 
+                                            id={`transport-${option}`}
+                                            type="number"
+                                            placeholder="e.g., 7000"
+                                            value={costing.transportation_costs[option] || ""}
+                                            onChange={(e) => handleCostChange('transportation_costs', option, e.target.value)}
+                                            disabled={isSubmitting}
+                                        />
+                                    </div>
+                                ))}
+                            </CardContent>
+                        </AccordionContent>
+                    </Card>
+                </AccordionItem>
+            </Accordion>
+
 
              <div className="flex justify-end pt-4">
                 <Button type="submit" disabled={isSubmitting}>
