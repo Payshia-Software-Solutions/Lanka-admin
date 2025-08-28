@@ -245,9 +245,11 @@ export interface VehicleType {
   updated_at: string;
 }
 
-export interface Costing {
-    budgetRanges: Record<string, number>;
-    activities: Record<string, number>;
-    transportation: Record<string, number>;
-    amenities: Record<string, number>;
+export interface CostingSettings {
+    id?: number;
+    company_id: number;
+    budget_range_costs: Record<string, number>;
+    amenity_costs: Record<string, number>;
+    activity_costs: Record<string, number>;
+    transportation_costs: Record<string, number>;
 }

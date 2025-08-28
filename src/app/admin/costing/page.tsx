@@ -6,12 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Loader2, PlusCircle, Trash2 } from "lucide-react";
+import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Activity } from "@/lib/types";
-import { Separator } from "@/components/ui/separator";
-
-const COSTING_STORAGE_KEY = "LANKA_ADMIN_COSTING";
 
 const budgetRanges = [
     'Less than LKR 3000',
@@ -41,10 +38,10 @@ const amenities = [
 
 
 interface CostingState {
-    budgetRanges: Record<string, number>;
-    activities: Record<string, number>;
-    transportation: Record<string, number>;
-    amenities: Record<string, number>;
+    budget_range_costs: Record<string, number>;
+    activity_costs: Record<string, number>;
+    transportation_costs: Record<string, number>;
+    amenity_costs: Record<string, number>;
 }
 
 export default function CostingPage() {
@@ -52,55 +49,86 @@ export default function CostingPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [costing, setCosting] = useState<CostingState>({
-        budgetRanges: {},
-        activities: {},
-        transportation: {},
-        amenities: {}
+        budget_range_costs: {},
+        activity_costs: {},
+        transportation_costs: {},
+        amenity_costs: {}
     });
+    const [settingsId, setSettingsId] = useState<number | null>(null);
 
     const [allActivities, setAllActivities] = useState<Activity[]>([]);
 
+    const companyId = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id : null;
+
     useEffect(() => {
-        setIsLoading(true);
-        if (typeof window !== 'undefined') {
-            // Load costing from localStorage
-            const savedCosting = localStorage.getItem(COSTING_STORAGE_KEY);
-            if (savedCosting) {
-                setCosting(JSON.parse(savedCosting));
-            } else {
-                // Initialize default costing if none is saved
-                const defaultCosting: CostingState = {
-                    budgetRanges: budgetRanges.reduce((acc, range) => ({ ...acc, [range]: 0 }), {}),
-                    activities: {},
-                    transportation: transportationOptions.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-                    amenities: amenities.reduce((acc, amenity) => ({ ...acc, [amenity]: 0 }), {})
-                };
-                setCosting(defaultCosting);
+        const fetchCostSettings = async () => {
+            if (!companyId) {
+                setIsLoading(false);
+                return;
             }
             
-            // Fetch activities from API
-            const fetchActivities = async () => {
-                try {
-                    const response = await fetch("http://localhost/travel_web_server/activities");
-                    if (!response.ok) throw new Error("Failed to fetch activities");
-                    const data = await response.json();
-                    if(Array.isArray(data)) {
-                        setAllActivities(data);
+            setIsLoading(true);
+            try {
+                const response = await fetch('http://localhost/travel_web_server/cost_settings');
+                if (!response.ok) throw new Error("Failed to fetch cost settings.");
+                
+                const allSettings = await response.json();
+                if (Array.isArray(allSettings)) {
+                    const companySettings = allSettings.find(s => s.company_id.toString() === companyId.toString());
+                    if (companySettings) {
+                        setCosting({
+                            budget_range_costs: companySettings.budget_range_costs || {},
+                            activity_costs: companySettings.activity_costs || {},
+                            transportation_costs: companySettings.transportation_costs || {},
+                            amenity_costs: companySettings.amenity_costs || {},
+                        });
+                        setSettingsId(companySettings.id);
+                    } else {
+                        // Initialize with default empty state if no settings found for company
+                        setCosting({
+                            budget_range_costs: budgetRanges.reduce((acc, range) => ({ ...acc, [range]: 0 }), {}),
+                            activity_costs: {},
+                            transportation_costs: transportationOptions.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
+                            amenity_costs: amenities.reduce((acc, amenity) => ({ ...acc, [amenity]: 0 }), {})
+                        });
+                        setSettingsId(null);
                     }
-                } catch (error) {
-                    console.error("Error fetching activities:", error);
-                    toast({
-                        variant: "destructive",
-                        title: "Error",
-                        description: "Could not load activities for costing.",
-                    });
                 }
-            };
+            } catch (error) {
+                console.error("Error fetching cost settings:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Could not load costing settings from server.",
+                });
+            }
+        };
 
+        const fetchActivities = async () => {
+            try {
+                const response = await fetch("http://localhost/travel_web_server/activities");
+                if (!response.ok) throw new Error("Failed to fetch activities");
+                const data = await response.json();
+                if(Array.isArray(data)) {
+                    setAllActivities(data);
+                }
+            } catch (error) {
+                console.error("Error fetching activities:", error);
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Could not load activities for costing.",
+                });
+            }
+        };
+        
+        if (companyId) {
+            fetchCostSettings();
             fetchActivities();
         }
+
         setIsLoading(false);
-    }, [toast]);
+    }, [companyId, toast]);
 
     const handleCostChange = (category: keyof CostingState, key: string, value: string) => {
         const numericValue = parseFloat(value) || 0;
@@ -115,21 +143,53 @@ export default function CostingPage() {
 
     const handleSaveCosting = async (e: FormEvent) => {
         e.preventDefault();
+        if (!companyId) {
+            toast({ variant: "destructive", title: "Error", description: "Company ID not found. Please log in again."});
+            return;
+        }
         setIsSubmitting(true);
+
+        const payload = {
+            company_id: companyId,
+            ...costing,
+        };
+
         try {
-            if(typeof window !== 'undefined') {
-                localStorage.setItem(COSTING_STORAGE_KEY, JSON.stringify(costing));
-                toast({
-                    title: "Success",
-                    description: "Costing settings have been saved successfully.",
-                });
+            const url = settingsId 
+                ? `http://localhost/travel_web_server/cost_settings/${settingsId}`
+                : 'http://localhost/travel_web_server/cost_settings';
+            
+            const method = settingsId ? 'PUT' : 'POST';
+
+            const response = await fetch(url, {
+                method: method,
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(payload),
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to save settings. Server responded with ${response.status}`);
             }
+            
+            const result = await response.json();
+            
+            if (result.id && !settingsId) {
+                setSettingsId(result.id);
+            }
+
+            toast({
+                title: "Success",
+                description: "Costing settings have been saved successfully.",
+            });
+
         } catch (error) {
             console.error("Failed to save costing:", error);
+            const errorMessage = error instanceof Error ? error.message : "An unknown error occurred.";
             toast({
                 variant: "destructive",
                 title: "Error",
-                description: "Could not save costing settings.",
+                description: `Could not save costing settings: ${errorMessage}`,
             });
         } finally {
             setIsSubmitting(false);
@@ -169,8 +229,8 @@ export default function CostingPage() {
                                 id={`budget-${range}`}
                                 type="number"
                                 placeholder="e.g., 5000"
-                                value={costing.budgetRanges[range] || ""}
-                                onChange={(e) => handleCostChange('budgetRanges', range, e.target.value)}
+                                value={costing.budget_range_costs[range] || ""}
+                                onChange={(e) => handleCostChange('budget_range_costs', range, e.target.value)}
                                 disabled={isSubmitting}
                             />
                         </div>
@@ -191,8 +251,8 @@ export default function CostingPage() {
                                 id={`amenity-${amenity}`}
                                 type="number"
                                 placeholder="e.g., 500"
-                                value={costing.amenities[amenity] || ""}
-                                onChange={(e) => handleCostChange('amenities', amenity, e.target.value)}
+                                value={costing.amenity_costs[amenity] || ""}
+                                onChange={(e) => handleCostChange('amenity_costs', amenity, e.target.value)}
                                 disabled={isSubmitting}
                             />
                         </div>
@@ -213,8 +273,8 @@ export default function CostingPage() {
                                 id={`activity-${activity.id}`}
                                 type="number"
                                 placeholder="e.g., 2500"
-                                value={costing.activities[activity.name] || ""}
-                                onChange={(e) => handleCostChange('activities', activity.name, e.target.value)}
+                                value={costing.activity_costs[activity.name] || ""}
+                                onChange={(e) => handleCostChange('activity_costs', activity.name, e.target.value)}
                                 disabled={isSubmitting}
                             />
                         </div>
@@ -237,8 +297,8 @@ export default function CostingPage() {
                                 id={`transport-${option}`}
                                 type="number"
                                 placeholder="e.g., 7000"
-                                value={costing.transportation[option] || ""}
-                                onChange={(e) => handleCostChange('transportation', option, e.target.value)}
+                                value={costing.transportation_costs[option] || ""}
+                                onChange={(e) => handleCostChange('transportation_costs', option, e.target.value)}
                                 disabled={isSubmitting}
                             />
                         </div>
