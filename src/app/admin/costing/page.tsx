@@ -36,6 +36,14 @@ const amenities = [
   'Gym',
 ];
 
+const accommodationCostTypes = [
+    "Hotel",
+    "Resort",
+    "Rental",
+    "Village Home",
+    "Camping",
+];
+
 
 interface CostingState {
     budget_range_costs: Record<string, number>;
@@ -89,7 +97,7 @@ export default function CostingPage() {
                             budget_range_costs: budgetRanges.reduce((acc, range) => ({ ...acc, [range]: 0 }), {}),
                             activity_costs: {},
                             transportation_costs: transportationOptions.reduce((acc, opt) => ({ ...acc, [opt]: 0 }), {}),
-                            amenity_costs: amenities.reduce((acc, amenity) => ({ ...acc, [amenity]: 0 }), {})
+                            amenity_costs: [...amenities, ...accommodationCostTypes].reduce((acc, item) => ({...acc, [item]: 0}), {})
                         });
                         setSettingsId(null);
                     }
@@ -240,6 +248,28 @@ export default function CostingPage() {
 
             <Card>
                 <CardHeader>
+                    <CardTitle>Accommodation Type Costs</CardTitle>
+                    <CardDescription>Set additional costs for each accommodation type. These will be stored with amenities.</CardDescription>
+                </CardHeader>
+                <CardContent className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {accommodationCostTypes.map(type => (
+                        <div key={type} className="space-y-2">
+                            <Label htmlFor={`accommodation-type-${type}`}>{type}</Label>
+                            <Input 
+                                id={`accommodation-type-${type}`}
+                                type="number"
+                                placeholder="e.g., 1000"
+                                value={costing.amenity_costs[type] || ""}
+                                onChange={(e) => handleCostChange('amenity_costs', type, e.target.value)}
+                                disabled={isSubmitting}
+                            />
+                        </div>
+                    ))}
+                </CardContent>
+            </Card>
+
+            <Card>
+                <CardHeader>
                     <CardTitle>Amenity Costs</CardTitle>
                     <CardDescription>Set additional costs for each amenity, if any.</CardDescription>
                 </CardHeader>
@@ -314,5 +344,3 @@ export default function CostingPage() {
         </form>
     )
 }
-
-    
