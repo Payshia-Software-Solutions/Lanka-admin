@@ -166,6 +166,15 @@ export default function TripPlansPage() {
     const duration = differenceInDays(toDate, fromDate) + 1;
     return duration > 0 ? duration : null;
   };
+  
+  const calculateCostPerPerson = (plan: TripPlan) => {
+    const totalTravelers = (plan.adults || 0) + (plan.children || 0);
+    const estimatedCost = parseFloat(plan.estimated_cost);
+    if (totalTravelers > 0 && estimatedCost > 0) {
+        return (estimatedCost / totalTravelers).toFixed(2);
+    }
+    return null;
+  };
 
   const renderPlanTable = (plans: TripPlan[], tableType: 'Custom' | 'Pre-plan') => {
     return (
@@ -178,12 +187,14 @@ export default function TripPlansPage() {
             <TableHead>Travelers</TableHead>
             <TableHead>Budget Range (LKR)</TableHead>
             <TableHead>Estimated Cost (LKR)</TableHead>
+            {tableType === 'Pre-plan' && <TableHead>Cost Per Person (LKR)</TableHead>}
             <TableHead className="text-right">Details</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {plans.map((plan) => {
             const duration = calculateDuration(plan.from_date, plan.to_date);
+            const costPerPerson = tableType === 'Pre-plan' ? calculateCostPerPerson(plan) : null;
             return (
               <React.Fragment key={plan.id}>
                 <TableRow
@@ -220,6 +231,9 @@ export default function TripPlansPage() {
                       ? parseFloat(plan.estimated_cost).toFixed(2)
                       : "N/A"}
                   </TableCell>
+                  {tableType === 'Pre-plan' && (
+                    <TableCell>{costPerPerson || 'N/A'}</TableCell>
+                  )}
                   <TableCell className="text-right">
                     <Button variant="ghost" size="icon">
                       <ChevronDown
@@ -233,7 +247,7 @@ export default function TripPlansPage() {
 
                 {selectedPlanId === plan.id && (
                   <TableRow key={`details-${plan.id}`}>
-                    <TableCell colSpan={8}>
+                    <TableCell colSpan={tableType === 'Pre-plan' ? 9 : 8}>
                       {isDetailsLoading && (
                         <div className="flex justify-center items-center p-8">
                           <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -357,6 +371,12 @@ export default function TripPlansPage() {
                                       ).toFixed(2)
                                     : "N/A"}
                                 </p>
+                                {planDetails.plan?.plan_type === 'pre-plan' && (
+                                    <p>
+                                        <strong>Cost Per Person (LKR):</strong>{" "}
+                                        {calculateCostPerPerson(planDetails.plan) || 'N/A'}
+                                    </p>
+                                )}
                               </CardContent>
                             </Card>
                              <Card>
