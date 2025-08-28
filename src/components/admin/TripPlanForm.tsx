@@ -15,7 +15,7 @@ import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { destinations as hardcodedDestinations } from '@/lib/destinations';
 import { useToast } from "@/hooks/use-toast";
-import type { ApiDestination, Destination, Activity as ActivityType, User } from '@/lib/types';
+import type { ApiDestination, Destination, Activity as ActivityType, User, CostingSettings } from '@/lib/types';
 import { Label } from '../ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
@@ -132,15 +132,19 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   const { toast } = useToast();
   
   const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [costSettings, setCostSettings] = useState<CostingSettings | null>(null);
 
 
   useEffect(() => {
     const fetchInitialData = async () => {
         try {
-            const [destRes, actRes, usersRes] = await Promise.all([
+            const companyId = JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id;
+
+            const [destRes, actRes, usersRes, costRes] = await Promise.all([
                 fetch('http://localhost/travel_web_server/destinations'),
                 fetch('http://localhost/travel_web_server/activities'),
-                fetch('http://localhost/travel_web_server/users')
+                fetch('http://localhost/travel_web_server/users'),
+                fetch('http://localhost/travel_web_server/cost_settings')
             ]);
             
             const apiDestData = await destRes.json();
@@ -163,6 +167,12 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
             const usersData = await usersRes.json();
              if(Array.isArray(usersData)) {
                 setAllUsers(usersData);
+            }
+
+            const costData = await costRes.json();
+            if (Array.isArray(costData) && companyId) {
+                const companySettings = costData.find(s => s.company_id.toString() === companyId.toString());
+                setCostSettings(companySettings || null);
             }
 
         } catch (error) {
@@ -200,37 +210,45 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   };
 
   const estimatedCost = useMemo(() => {
-    let totalCost = 0;
-    const numberOfTravelers = adults + children;
-    const tripDuration = (fromDate && toDate) ? differenceInDays(toDate, fromDate) + 1 : 1;
+      if (!costSettings) return 0;
 
-    if (selectedAccommodation && selectedBudget) {
-        const budgetMap: { [key: string]: number } = {
-            'Less than LKR 3000': 2000,
-            'LKR 3000-5000': 4000,
-            'LKR 5000-8000': 6500,
-            'LKR 8000-10,000': 9000,
-            'LKR 10,000 to Above': 12000,
-        };
-        totalCost += (budgetMap[selectedBudget] || 0) * tripDuration;
-    }
+      let totalCost = 0;
+      const numberOfTravelers = adults + children; // Infants are often free
+      const tripDuration = (fromDate && toDate) ? differenceInDays(toDate, fromDate) + 1 : 1;
 
-    totalCost += selectedActivities.length * 1500 * numberOfTravelers;
+      // Accommodation cost
+      if (selectedBudget && costSettings.budget_range_costs?.[selectedBudget]) {
+          totalCost += (costSettings.budget_range_costs[selectedBudget] || 0) * tripDuration;
+      }
+      
+      // Accommodation type cost
+      if (selectedAccommodation && costSettings.amenity_costs?.[selectedAccommodation]) {
+        totalCost += (costSettings.amenity_costs[selectedAccommodation] || 0) * tripDuration;
+      }
 
-    const transportCostMap: { [key: string]: number } = {
-        'Flights': 10000 * numberOfTravelers,
-        'Rental Car': 5000 * tripDuration,
-        'Public Transport': 500 * tripDuration * numberOfTravelers,
-        'Rental Bike': 1000 * tripDuration,
-        'Rental Van': 7000 * tripDuration,
-        'Rental Bus': 10000 * tripDuration,
-    };
-    selectedTransportation.forEach(transport => {
-        totalCost += transportCostMap[transport] || 0;
-    });
+      // Amenity costs
+      selectedAmenities.forEach(amenity => {
+          if (costSettings.amenity_costs?.[amenity]) {
+              totalCost += (costSettings.amenity_costs[amenity] || 0) * tripDuration;
+          }
+      });
 
-    return totalCost;
-  }, [selectedAccommodation, selectedBudget, selectedActivities, selectedTransportation, adults, children, fromDate, toDate]);
+      // Activity costs (per person)
+      selectedActivities.forEach(activityName => {
+          if (costSettings.activity_costs?.[activityName]) {
+              totalCost += (costSettings.activity_costs[activityName] || 0) * numberOfTravelers;
+          }
+      });
+
+      // Transportation costs (per day)
+      selectedTransportation.forEach(transportName => {
+          if (costSettings.transportation_costs?.[transportName]) {
+              totalCost += (costSettings.transportation_costs[transportName] || 0) * tripDuration;
+          }
+      });
+
+      return totalCost;
+  }, [costSettings, selectedAccommodation, selectedBudget, selectedActivities, selectedTransportation, selectedAmenities, adults, children, fromDate, toDate]);
 
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
