@@ -15,8 +15,7 @@ export interface Activity {
 export interface ThingToDo {
   title: string;
   description: string;
-  imageUrl: string;
-  icon?: string;
+  image_url?: string | null;
   imageFile?: File;
 }
 

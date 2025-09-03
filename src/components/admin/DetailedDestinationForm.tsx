@@ -56,7 +56,7 @@ const imageFileSchema = z
 const thingToDoSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
-  imageUrl: z.any().optional(), // Now optional URL string for existing data
+  image_url: z.string().optional(), // Existing URL from API
   imageFile: z.any().optional(), // For new file uploads
 });
 
@@ -507,7 +507,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                   />
                 </div>
               ))}
-               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", imageUrl: "" })}>
+               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", image_url: "", imageFile: null })}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Thing to Do
               </Button>
             </CardContent>
