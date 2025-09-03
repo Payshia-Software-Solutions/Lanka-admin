@@ -3,11 +3,12 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import type { Destination } from "@/lib/types";
+import type { ApiDestination } from "@/lib/types";
 import { DetailedDestinationForm } from "@/components/admin/DetailedDestinationForm";
 
 export default function EditDestinationPage() {
@@ -16,7 +17,7 @@ export default function EditDestinationPage() {
   const { toast } = useToast();
   const destinationId = params.id as string;
 
-  const [destination, setDestination] = useState<Destination | null>(null); 
+  const [destination, setDestination] = useState<ApiDestination | null>(null); 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
 
@@ -67,7 +68,7 @@ export default function EditDestinationPage() {
             const responseData = await response.json();
             toast({
                 title: "Destination Updated",
-                description: `Successfully updated "${responseData?.name || 'destination'}".`,
+                description: `Successfully updated "${responseData?.destination.name || 'destination'}".`,
             });
             router.push("/admin/destinations");
             router.refresh();
@@ -122,6 +123,40 @@ export default function EditDestinationPage() {
           <CardDescription>Update the information for this destination.</CardDescription>
         </CardHeader>
         <CardContent>
+          <div className="space-y-4 mb-8">
+            <h3 className="text-lg font-medium">Current Images</h3>
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+              {destination.hero_bg_image_url && (
+                 <div>
+                    <Label className="text-sm font-semibold">Hero Image</Label>
+                    <Image src={`https://content-provider.payshia.com/travel-web${destination.hero_bg_image_url}`} alt="Current hero image" data-ai-hint="hero background" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                </div>
+              )}
+              {destination.intro_image_url && (
+                <div>
+                    <Label className="text-sm font-semibold">Intro Image</Label>
+                    <Image src={`https://content-provider.payshia.com/travel-web${destination.intro_image_url}`} alt="Current intro image" data-ai-hint="introduction" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                </div>
+              )}
+               {destination.image_url && (
+                <div>
+                    <Label className="text-sm font-semibold">Main Image</Label>
+                    <Image src={`https://content-provider.payshia.com/travel-web${destination.image_url}`} alt="Current main image" data-ai-hint="main destination" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                </div>
+              )}
+            </div>
+             {destination.gallery_image_urls && destination.gallery_image_urls.length > 0 && (
+              <div>
+                <Label className="text-sm font-semibold">Gallery Images</Label>
+                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
+                    {destination.gallery_image_urls.map((url, index) => (
+                      <Image key={index} src={`https://content-provider.payshia.com/travel-web${url}`} alt={`Gallery image ${index + 1}`} data-ai-hint="destination gallery" width={200} height={150} className="rounded-md object-cover border" />
+                    ))}
+                 </div>
+              </div>
+            )}
+          </div>
+
           <DetailedDestinationForm 
             initialData={destination} 
             onSubmitForm={handleSubmit} 

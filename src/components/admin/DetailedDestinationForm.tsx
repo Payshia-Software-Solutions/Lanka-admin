@@ -39,7 +39,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
-import type { Destination } from "@/lib/types";
+import type { ApiDestination } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
@@ -66,13 +66,20 @@ const galleryImageSchema = z.object({
 
 
 const createDestinationSchema = z.object({
+  name: z.string().min(3, "Name must be at least 3 characters long."),
+  websiteId: z.string().min(1, "Website ID is required."),
+  location: z.string().min(3, "Location is required."),
+  is_popular: z.boolean().default(false),
+
   heroHeading: z.string().min(3, "Hero heading is required."),
   heroSubheading: z.string().min(3, "Hero sub-heading is required."),
   heroBgImage: imageFileSchema.refine((files) => files?.length >= 1, "Hero background image is required."),
   
   introHeading: z.string().min(3, "Intro heading is required."),
-  introDescription: z.string().min(10, "Intro description must be at least 10 characters."),
+  description: z.string().min(10, "Intro description must be at least 10 characters."),
   introImage: imageFileSchema.refine((files) => files?.length >= 1, "Intro image is required."),
+  
+  image: imageFileSchema.refine((files) => files?.length >= 1, "Main destination image is required."),
 
   galleryImages: z.array(galleryImageSchema),
 
@@ -83,17 +90,12 @@ const createDestinationSchema = z.object({
   travelTipHeading: z.string().min(3, "Travel tip heading is required."),
   travelTipIcon: z.string().min(1, "Please select an icon."),
   travelTipDescription: z.string().min(10, "Travel tip description is required."),
-  
-  // Core fields
-  name: z.string().min(3, "Name must be at least 3 characters long."),
-  websiteId: z.string().min(1, "Website ID is required."),
-  location: z.string().min(3, "Location is required."),
-  is_popular: z.boolean().default(false),
 });
 
 const editDestinationSchema = createDestinationSchema.extend({
     heroBgImage: imageFileSchema.optional(),
     introImage: imageFileSchema.optional(),
+    image: imageFileSchema.optional(),
 });
 
 export type DestinationFormData = z.infer<typeof createDestinationSchema>;
@@ -108,8 +110,8 @@ const ICONS = [
 ];
 
 interface DetailedDestinationFormProps {
-    initialData?: Destination | null;
-    onSubmitForm: (data: DestinationFormData | FormData) => Promise<void>;
+    initialData?: ApiDestination | null;
+    onSubmitForm: (data: FormData) => Promise<void>;
     isSubmitting?: boolean;
     isEditing?: boolean;
 }
@@ -123,17 +125,21 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       name: initialData?.name || "",
       websiteId: initialData?.company_id?.toString() || "",
       location: initialData?.location || "",
+      is_popular: initialData?.is_popular || false,
+
       heroHeading: initialData?.hero_heading || "",
       heroSubheading: initialData?.hero_subheading || "",
+      
       introHeading: initialData?.intro_heading || "",
-      introDescription: initialData?.description || "",
-      galleryImages: [],
+      description: initialData?.description || "",
+      
+      galleryImages: [], // Always empty initially for new uploads
+      
       thingsToDo: initialData?.things_to_do || [],
       nearbyAttractions: (initialData?.nearby_attractions || []).join(', '),
       travelTipHeading: initialData?.travel_tip_heading || "",
       travelTipIcon: initialData?.travel_tip_icon || "Star",
       travelTipDescription: initialData?.travel_tip_description || "",
-      is_popular: initialData?.is_popular || false,
     },
   });
 
@@ -179,9 +185,13 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     }
 
     appendIfExists('intro_heading', data.introHeading);
-    appendIfExists('description', data.introDescription);
+    appendIfExists('description', data.description);
     if (data.introImage && data.introImage[0]) {
         formData.append('intro_image', data.introImage[0]);
+    }
+
+    if (data.image && data.image[0]) {
+        formData.append('image', data.image[0]);
     }
 
     if (data.galleryImages && data.galleryImages.length > 0) {
@@ -200,10 +210,11 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       }
     });
     
-    // Handle arrays by stringifying them or sending as individual fields
-    data.nearbyAttractions.forEach((attraction, index) => {
-        formData.append(`nearby_attractions[${index}]`, attraction);
-    });
+    if (Array.isArray(data.nearbyAttractions)) {
+        data.nearbyAttractions.forEach((attraction, index) => {
+            formData.append(`nearby_attractions[${index}]`, attraction);
+        });
+    }
 
     appendIfExists('travel_tip_heading', data.travelTipHeading);
     appendIfExists('travel_tip_icon', data.travelTipIcon);
@@ -331,7 +342,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                       <FormControl>
                           <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
                       </FormControl>
-                      {isEditing && initialData?.hero_bg_image_url && <FormDescription>Leave blank to keep the current image.</FormDescription>}
+                      {isEditing && <FormDescription>Leave blank to keep the current image.</FormDescription>}
                       <FormMessage />
                       </FormItem>
                   )}
@@ -358,7 +369,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
               />
               <FormField
                 control={form.control}
-                name="introDescription"
+                name="description"
                 render={({ field }) => (
                   <FormItem>
                     <FormLabel>Intro Description</FormLabel>
@@ -376,7 +387,30 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                       <FormControl>
                           <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
                       </FormControl>
-                      {isEditing && initialData?.intro_image_url && <FormDescription>Leave blank to keep the current image.</FormDescription>}
+                      {isEditing && <FormDescription>Leave blank to keep the current image.</FormDescription>}
+                      <FormMessage />
+                      </FormItem>
+                  )}
+              />
+            </CardContent>
+          </Card>
+
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Main Image</CardTitle>
+              <CardDescription>A primary image for listings and cards.</CardDescription>
+            </CardHeader>
+            <CardContent>
+               <FormField
+                  control={form.control}
+                  name="image"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Main Destination Image</FormLabel>
+                      <FormControl>
+                          <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                      </FormControl>
+                      {isEditing && <FormDescription>Leave blank to keep the current image.</FormDescription>}
                       <FormMessage />
                       </FormItem>
                   )}
@@ -395,11 +429,11 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                     <FormField
                     control={form.control}
                     name={`galleryImages.${index}.file`}
-                    render={({ field }) => (
+                    render={({ field: fileField }) => (
                         <FormItem className="flex-grow">
                         <FormLabel className="sr-only">Gallery Image {index + 1}</FormLabel>
                         <FormControl>
-                            <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                            <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
                         </FormControl>
                         <FormMessage />
                         </FormItem>

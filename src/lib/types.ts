@@ -1,5 +1,6 @@
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -15,7 +16,8 @@ export interface ThingToDo {
   title: string;
   description: string;
   imageUrl: string;
-  icon: string;
+  icon?: string;
+  imageFile?: File;
 }
 
 export interface Website {
@@ -40,19 +42,21 @@ export interface Destination {
 
 
 export interface ApiDestination {
-  id: number; // Allow number for new items from DB
+  id: number; 
   name: string;
   description: string;
   location: string;
-  websiteId?: string; // This may not be on the object from the backend directly
-  company_id: string | number; // From backend
+  company_id: string | number;
   
-  // New detailed fields
   hero_heading?: string;
   hero_subheading?: string;
   hero_bg_image_url?: string;
+  
   intro_heading?: string;
   intro_image_url?: string;
+
+  image_url?: string; // For the main destination image
+  
   gallery_image_urls?: string[];
   things_to_do?: ThingToDo[];
   nearby_attractions?: string[];
@@ -60,11 +64,6 @@ export interface ApiDestination {
   travel_tip_icon?: string;
   travel_tip_description?: string;
   is_popular?: boolean;
-
-  // Compatibility with old structure if needed
-  images?: string[]; 
-  metaTitle?: string;
-  metaDescription?: string;
 }
 
 export type PackageStatus = 'Draft' | 'Published' | 'Archived';
