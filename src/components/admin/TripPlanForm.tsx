@@ -39,11 +39,11 @@ const interests = [
 ];
 
 const accommodationTypes = [
-  { name: 'Hotel', image: 'https://placehold.co/400x300.png', aiHint: 'luxury hotel' },
-  { name: 'Resort', image: 'https://placehold.co/400x300.png', aiHint: 'beach resort' },
-  { name: 'Rental', image: 'https://placehold.co/400x300.png', aiHint: 'vacation rental' },
-  { name: 'Village Home', image: 'https://placehold.co/400x300.png', aiHint: 'village house' },
-  { name: 'Camping', image: 'https://placehold.co/400x300.png', aiHint: 'camping tent' },
+  { name: 'Hotel', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img16.webp', aiHint: 'luxury hotel' },
+  { name: 'Resort', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img18.webp', aiHint: 'beach resort' },
+  { name: 'Rental', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img13.webp', aiHint: 'vacation rental' },
+  { name: 'Village Home', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img14.webp', aiHint: 'village house' },
+  { name: 'Camping', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img10.webp', aiHint: 'camping tent' },
 ];
 
 const budgetRanges = [
@@ -55,12 +55,12 @@ const budgetRanges = [
 ];
 
 const amenities = [
-  { name: 'Free WiFi', image: 'https://placehold.co/200x200.png', aiHint: 'wifi symbol' },
-  { name: 'Pool', image: 'https://placehold.co/200x200.png', aiHint: 'swimming pool' },
-  { name: 'Parking', image: 'https://placehold.co/200x200.png', aiHint: 'parking sign' },
-  { name: 'Breakfast', image: 'https://placehold.co/200x200.png', aiHint: 'breakfast food' },
-  { name: 'Pet-friendly', image: 'https://placehold.co/200x200.png', aiHint: 'dog cat' },
-  { name: 'Gym', image: 'https://placehold.co/200x200.png', aiHint: 'gym equipment' },
+  { name: 'Free WiFi', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img12.webp', aiHint: 'wifi symbol' },
+  { name: 'Pool', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img7.webp', aiHint: 'swimming pool' },
+  { name: 'Parking', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img11.webp', aiHint: 'parking sign' },
+  { name: 'Breakfast', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img7.webp', aiHint: 'breakfast food' },
+  { name: 'Pet-friendly', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img17.webp', aiHint: 'dog cat' },
+  { name: 'Gym', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img15.webp', aiHint: 'gym equipment' },
 ];
 
 const transportationOptions = [
@@ -932,4 +932,5 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   );
 }
 
+    
     
