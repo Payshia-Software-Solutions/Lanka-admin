@@ -42,23 +42,35 @@ import { useRouter } from "next/navigation";
 import type { Destination } from "@/lib/types";
 import { Switch } from "@/components/ui/switch";
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+
+const imageFileSchema = z
+  .any()
+  .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+  .refine(
+    (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+    ".jpg, .jpeg, .png and .webp files are accepted."
+  );
+
 const thingToDoSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
-  imageUrl: z.string().url("Please enter a valid URL."),
-  icon: z.string().min(1, "Please select an icon."),
+  imageUrl: z.any().optional(), // Now optional URL string for existing data
+  imageFile: z.any().optional(), // For new file uploads
 });
 
-const destinationSchema = z.object({
+
+const createDestinationSchema = z.object({
   heroHeading: z.string().min(3, "Hero heading is required."),
   heroSubheading: z.string().min(3, "Hero sub-heading is required."),
-  heroBgImageUrl: z.string().url("Please enter a valid background image URL."),
+  heroBgImage: imageFileSchema.refine((files) => files?.length >= 1, "Hero background image is required."),
   
   introHeading: z.string().min(3, "Intro heading is required."),
   introDescription: z.string().min(10, "Intro description must be at least 10 characters."),
-  introImageUrl: z.string().url("Please enter a valid intro image URL."),
+  introImage: imageFileSchema.refine((files) => files?.length >= 1, "Intro image is required."),
 
-  galleryImageUrls: z.array(z.object({ url: z.string().url("Please enter a valid URL.") })),
+  galleryImages: z.any().optional(),
 
   thingsToDo: z.array(thingToDoSchema),
 
@@ -75,7 +87,12 @@ const destinationSchema = z.object({
   is_popular: z.boolean().default(false),
 });
 
-export type DestinationFormData = z.infer<typeof destinationSchema>;
+const editDestinationSchema = createDestinationSchema.extend({
+    heroBgImage: imageFileSchema.optional(),
+    introImage: imageFileSchema.optional(),
+});
+
+export type DestinationFormData = z.infer<typeof createDestinationSchema>;
 
 const ICONS = [
   { value: "Sun", icon: Sun },
@@ -88,7 +105,7 @@ const ICONS = [
 
 interface DetailedDestinationFormProps {
     initialData?: Destination | null;
-    onSubmitForm: (data: DestinationFormData) => Promise<void>;
+    onSubmitForm: (data: DestinationFormData | FormData) => Promise<void>;
     isSubmitting?: boolean;
     isEditing?: boolean;
 }
@@ -97,18 +114,15 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
   const router = useRouter();
 
   const form = useForm<DestinationFormData>({
-    resolver: zodResolver(destinationSchema),
+    resolver: zodResolver(isEditing ? editDestinationSchema : createDestinationSchema),
     defaultValues: {
       name: initialData?.name || "",
       websiteId: initialData?.company_id?.toString() || "",
       location: initialData?.location || "",
       heroHeading: initialData?.hero_heading || "",
       heroSubheading: initialData?.hero_subheading || "",
-      heroBgImageUrl: initialData?.hero_bg_image_url || "",
       introHeading: initialData?.intro_heading || "",
       introDescription: initialData?.description || "",
-      introImageUrl: initialData?.intro_image_url || "",
-      galleryImageUrls: initialData?.gallery_image_urls?.map(url => ({ url })) || [{ url: "" }],
       thingsToDo: initialData?.things_to_do || [],
       nearbyAttractions: (initialData?.nearby_attractions || []).join(', '),
       travelTipHeading: initialData?.travel_tip_heading || "",
@@ -119,30 +133,18 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
   });
 
    useEffect(() => {
-    if (isEditing && !initialData?.company_id) {
-       // If editing, try to get company_id from local storage as a fallback
-       const storedUser = localStorage.getItem('loggedInUser');
-       if (storedUser) {
-           const parsedUser = JSON.parse(storedUser);
-           if (parsedUser.company_id) {
-               form.setValue('websiteId', parsedUser.company_id.toString());
-           }
-       }
-    } else if (!isEditing) {
-        // If creating new, get from local storage
-        const storedUser = localStorage.getItem('loggedInUser');
-        if (storedUser) {
-           const parsedUser = JSON.parse(storedUser);
-           if (parsedUser.company_id) {
-               form.setValue('websiteId', parsedUser.company_id.toString());
-           }
-       }
+    const storedUser = localStorage.getItem('loggedInUser');
+    if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        if (parsedUser.company_id && !form.getValues('websiteId')) {
+            form.setValue('websiteId', parsedUser.company_id.toString());
+        }
     }
-  }, [form, isEditing, initialData?.company_id]);
+  }, [form]);
 
   const { fields: galleryFields, append: appendGallery, remove: removeGallery } = useFieldArray({
     control: form.control,
-    name: "galleryImageUrls",
+    name: "galleryImages",
   });
   
   const { fields: thingsToDoFields, append: appendThingToDo, remove: removeThingToDo } = useFieldArray({
@@ -150,9 +152,67 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     name: "thingsToDo",
   });
 
+  const handleFormSubmit: SubmitHandler<DestinationFormData> = (data) => {
+    const formData = new FormData();
+    
+    // Helper to append if value exists
+    const appendIfExists = (key: string, value: any) => {
+        if (value !== undefined && value !== null) {
+            formData.append(key, value);
+        }
+    };
+    
+    appendIfExists('name', data.name);
+    appendIfExists('company_id', data.websiteId);
+    appendIfExists('location', data.location);
+    appendIfExists('is_popular', data.is_popular.toString());
+
+    appendIfExists('hero_heading', data.heroHeading);
+    appendIfExists('hero_subheading', data.heroSubheading);
+    if (data.heroBgImage && data.heroBgImage[0]) {
+        formData.append('hero_bg_image', data.heroBgImage[0]);
+    }
+
+    appendIfExists('intro_heading', data.introHeading);
+    appendIfExists('description', data.introDescription);
+    if (data.introImage && data.introImage[0]) {
+        formData.append('intro_image', data.introImage[0]);
+    }
+
+    if (data.galleryImages && data.galleryImages.length > 0) {
+        data.galleryImages.forEach((file: File) => {
+            if (file) formData.append('gallery_images[]', file);
+        });
+    }
+
+    data.thingsToDo.forEach((item, index) => {
+      formData.append(`things_to_do[${index}][title]`, item.title);
+      formData.append(`things_to_do[${index}][description]`, item.description);
+      if (item.imageFile && item.imageFile[0]) {
+        formData.append(`things_to_do[${index}][image]`, item.imageFile[0]);
+      }
+    });
+    
+    // Handle arrays by stringifying them or sending as individual fields
+    data.nearbyAttractions.forEach((attraction, index) => {
+        formData.append(`nearby_attractions[${index}]`, attraction);
+    });
+
+    appendIfExists('travel_tip_heading', data.travelTipHeading);
+    appendIfExists('travel_tip_icon', data.travelTipIcon);
+    appendIfExists('travel_tip_description', data.travelTipDescription);
+    
+    if (isEditing) {
+        formData.append('_method', 'PUT');
+    }
+
+    onSubmitForm(formData);
+  };
+
+
   return (
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmitForm)} className="space-y-8">
+        <form onSubmit={form.handleSubmit(handleFormSubmit)} className="space-y-8">
           
           <Card className="shadow-lg">
             <CardHeader>
@@ -256,17 +316,18 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                 )}
               />
               <FormField
-                control={form.control}
-                name="heroBgImageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Background Image URL</FormLabel>
-                    <FormControl>
-                      <Input type="url" placeholder="https://placehold.co/1920x1080.png" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                  control={form.control}
+                  name="heroBgImage"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Background Image</FormLabel>
+                      <FormControl>
+                          <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                      </FormControl>
+                      {isEditing && initialData?.hero_bg_image_url && <FormDescription>Leave blank to keep the current image.</FormDescription>}
+                      <FormMessage />
+                      </FormItem>
+                  )}
               />
             </CardContent>
           </Card>
@@ -300,15 +361,18 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                 )}
               />
               <FormField
-                control={form.control}
-                name="introImageUrl"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Intro Image URL</FormLabel>
-                    <FormControl><Input type="url" placeholder="https://placehold.co/600x400.png" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
+                  control={form.control}
+                  name="introImage"
+                  render={({ field }) => (
+                      <FormItem>
+                      <FormLabel>Intro Image</FormLabel>
+                      <FormControl>
+                          <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                      </FormControl>
+                      {isEditing && initialData?.intro_image_url && <FormDescription>Leave blank to keep the current image.</FormDescription>}
+                      <FormMessage />
+                      </FormItem>
+                  )}
               />
             </CardContent>
           </Card>
@@ -319,32 +383,20 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
               <CardDescription>Add multiple images to showcase the destination.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              {galleryFields.map((field, index) => (
-                <div key={field.id} className="flex items-end gap-4">
-                  <FormField
-                    control={form.control}
-                    name={`galleryImageUrls.${index}.url`}
-                    render={({ field }) => (
-                      <FormItem className="flex-grow">
-                        <FormLabel>Image URL {index + 1}</FormLabel>
-                        <FormControl><Input type="url" placeholder="https://placehold.co/800x600.png" {...field} /></FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-                   <Button
-                      type="button"
-                      variant="destructive"
-                      size="icon"
-                      onClick={() => removeGallery(index)}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-              ))}
-              <Button type="button" variant="outline" onClick={() => appendGallery({ url: "" })}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add Image
-              </Button>
+              <FormField
+                control={form.control}
+                name="galleryImages"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Upload Gallery Images</FormLabel>
+                     <FormControl>
+                        <Input type="file" accept="image/*" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
+                    </FormControl>
+                    {isEditing && <FormDescription>Upload new images. This will replace the existing gallery.</FormDescription>}
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
             </CardContent>
           </Card>
           
@@ -382,9 +434,20 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                   />
                   <FormField
                     control={form.control}
-                    name={`thingsToDo.${index}.imageUrl`}
-                    render={({ field }) => (
-                      <FormItem><FormLabel>Image URL</FormLabel><FormControl><Input type="url" placeholder="https://placehold.co/300x200.png" {...field} /></FormControl><FormMessage /></FormItem>
+                    name={`thingsToDo.${index}.imageFile`}
+                    render={({ field: fileField }) => (
+                        <FormItem>
+                        <FormLabel>Image</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
+                        </FormControl>
+                        {isEditing && (
+                            <FormDescription>
+                                Leave blank to keep the current image for this item.
+                            </FormDescription>
+                        )}
+                        <FormMessage />
+                        </FormItem>
                     )}
                   />
                   <FormField

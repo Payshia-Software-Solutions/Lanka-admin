@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import type { Destination } from "@/lib/types";
-import { DetailedDestinationForm, type DestinationFormData } from "@/components/admin/DetailedDestinationForm";
+import { DetailedDestinationForm } from "@/components/admin/DetailedDestinationForm";
 
 export default function EditDestinationPage() {
   const params = useParams();
@@ -54,42 +54,23 @@ export default function EditDestinationPage() {
     fetchDestination();
   }, [destinationId, toast]);
 
-  const handleSubmit = async (data: DestinationFormData) => {
+  const handleSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
-    const apiData = {
-        company_id: parseInt(data.websiteId, 10),
-        name: data.name,
-        hero_heading: data.heroHeading,
-        hero_subheading: data.heroSubheading,
-        hero_bg_image_url: data.heroBgImageUrl,
-        intro_heading: data.introHeading,
-        description: data.introDescription,
-        intro_image_url: data.introImageUrl,
-        location: data.location,
-        gallery_image_urls: data.galleryImageUrls.map(item => item.url),
-        things_to_do: data.thingsToDo,
-        nearby_attractions: data.nearbyAttractions,
-        travel_tip_heading: data.travelTipHeading,
-        travel_tip_icon: data.travelTipIcon,
-        travel_tip_description: data.travelTipDescription,
-        is_popular: data.is_popular,
-    };
-
     try {
         const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(apiData),
+            method: 'POST', // Using POST with _method override
+            body: data,
         });
 
         if (response.ok) {
+            const responseData = await response.json();
             toast({
                 title: "Destination Updated",
-                description: `Successfully updated "${apiData.name}".`,
+                description: `Successfully updated "${responseData?.name || 'destination'}".`,
             });
             router.push("/admin/destinations");
-            router.refresh(); // To see the changes in the list
+            router.refresh();
         } else {
             const errorData = await response.json();
             throw new Error(errorData.error || 'Failed to update destination.');
