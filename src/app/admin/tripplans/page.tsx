@@ -402,7 +402,7 @@ export default function TripPlansPage() {
                               <CardHeader className="flex flex-row items-center gap-2"><MapPin className="h-5 w-5 text-primary" /><CardTitle className="text-lg">Destinations</CardTitle></CardHeader>
                               <CardContent>
                                 <ul className="list-disc list-inside text-sm">
-                                  {planDetails.destinations?.map(
+                                  {(Array.isArray(planDetails.destinations) ? planDetails.destinations : [planDetails.destinations].filter(Boolean))?.map(
                                     (d: any, idx: number) => (
                                       <li
                                         key={
