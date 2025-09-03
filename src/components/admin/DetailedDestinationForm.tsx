@@ -60,6 +60,12 @@ const thingToDoSchema = z.object({
   imageFile: z.any().optional(), // For new file uploads
 });
 
+const travelTipSchema = z.object({
+  heading: z.string().min(3, "Travel tip heading is required."),
+  icon: z.string().min(1, "Please select an icon."),
+  description: z.string().min(10, "Travel tip description is required."),
+});
+
 const galleryImageSchema = z.object({
     file: z.any().optional(),
 });
@@ -87,9 +93,7 @@ const createDestinationSchema = z.object({
 
   nearbyAttractions: z.string().transform(val => val.split(',').map(s => s.trim()).filter(Boolean)),
   
-  travelTipHeading: z.string().min(3, "Travel tip heading is required."),
-  travelTipIcon: z.string().min(1, "Please select an icon."),
-  travelTipDescription: z.string().min(10, "Travel tip description is required."),
+  travelTips: z.array(travelTipSchema),
 });
 
 const editDestinationSchema = createDestinationSchema.extend({
@@ -136,10 +140,8 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       galleryImages: [], // Always empty initially for new uploads
       
       thingsToDo: initialData?.things_to_do || [],
+      travelTips: initialData?.travel_tips || [],
       nearbyAttractions: (initialData?.nearby_attractions || []).join(', '),
-      travelTipHeading: initialData?.travel_tip_heading || "",
-      travelTipIcon: initialData?.travel_tip_icon || "Star",
-      travelTipDescription: initialData?.travel_tip_description || "",
     },
   });
 
@@ -161,6 +163,11 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
   const { fields: thingsToDoFields, append: appendThingToDo, remove: removeThingToDo } = useFieldArray({
     control: form.control,
     name: "thingsToDo",
+  });
+
+  const { fields: travelTipsFields, append: appendTravelTip, remove: removeTravelTip } = useFieldArray({
+    control: form.control,
+    name: "travelTips",
   });
 
   const handleFormSubmit: SubmitHandler<DestinationFormData> = (data) => {
@@ -216,9 +223,11 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
         });
     }
 
-    appendIfExists('travel_tip_heading', data.travelTipHeading);
-    appendIfExists('travel_tip_icon', data.travelTipIcon);
-    appendIfExists('travel_tip_description', data.travelTipDescription);
+    data.travelTips.forEach((tip, index) => {
+      formData.append(`travel_tips[${index}][heading]`, tip.heading);
+      formData.append(`travel_tips[${index}][icon]`, tip.icon);
+      formData.append(`travel_tips[${index}][description]`, tip.description);
+    });
     
     if (isEditing) {
         formData.append('_method', 'PUT');
@@ -533,49 +542,67 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
 
                 <Separator />
 
-                <div className="space-y-4">
-                    <h4 className="font-semibold text-lg">Travel Tip</h4>
-                    <FormField
-                        control={form.control}
-                        name="travelTipHeading"
-                        render={({ field }) => (
-                        <FormItem><FormLabel>Tip Heading</FormLabel><FormControl><Input placeholder="Best Time to Visit" {...field} /></FormControl><FormMessage /></FormItem>
-                        )}
-                    />
-                    <FormField
-                        control={form.control}
-                        name="travelTipIcon"
-                        render={({ field }) => (
-                        <FormItem>
-                            <FormLabel>Tip Icon</FormLabel>
-                             <Select onValueChange={field.onChange} defaultValue={field.value}>
-                                <FormControl>
-                                    <SelectTrigger>
-                                    <SelectValue placeholder="Select an icon" />
-                                    </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                    {ICONS.map(({value, icon: Icon}) => (
-                                        <SelectItem key={value} value={value}>
-                                            <div className="flex items-center gap-2">
-                                                <Icon className="h-4 w-4" />
-                                                <span>{value}</span>
-                                            </div>
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                                </Select>
-                            <FormMessage />
-                        </FormItem>
-                        )}
-                    />
-                     <FormField
-                        control={form.control}
-                        name="travelTipDescription"
-                        render={({ field }) => (
-                        <FormItem><FormLabel>Tip Description</FormLabel><FormControl><Textarea placeholder="Details about the travel tip..." {...field} /></FormControl><FormMessage /></FormItem>
-                        )}
-                    />
+                <div>
+                  <h3 className="text-xl font-semibold mb-4">Travel Tips</h3>
+                  {travelTipsFields.map((field, index) => (
+                    <div key={field.id} className="space-y-4 rounded-lg border p-4 relative mb-4">
+                      <h4 className="font-semibold text-lg">Tip {index + 1}</h4>
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeTravelTip(index)}
+                        className="absolute top-4 right-4"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+
+                      <FormField
+                          control={form.control}
+                          name={`travelTips.${index}.heading`}
+                          render={({ field }) => (
+                          <FormItem><FormLabel>Tip Heading</FormLabel><FormControl><Input placeholder="Best Time to Visit" {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name={`travelTips.${index}.icon`}
+                          render={({ field }) => (
+                          <FormItem>
+                              <FormLabel>Tip Icon</FormLabel>
+                              <Select onValueChange={field.onChange} defaultValue={field.value}>
+                                  <FormControl>
+                                      <SelectTrigger>
+                                      <SelectValue placeholder="Select an icon" />
+                                      </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                      {ICONS.map(({value, icon: Icon}) => (
+                                          <SelectItem key={value} value={value}>
+                                              <div className="flex items-center gap-2">
+                                                  <Icon className="h-4 w-4" />
+                                                  <span>{value}</span>
+                                              </div>
+                                          </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                  </Select>
+                              <FormMessage />
+                          </FormItem>
+                          )}
+                      />
+                      <FormField
+                          control={form.control}
+                          name={`travelTips.${index}.description`}
+                          render={({ field }) => (
+                          <FormItem><FormLabel>Tip Description</FormLabel><FormControl><Textarea placeholder="Details about the travel tip..." {...field} /></FormControl><FormMessage /></FormItem>
+                          )}
+                      />
+                    </div>
+                  ))}
+                  <Button type="button" variant="outline" onClick={() => appendTravelTip({ heading: "", icon: "Star", description: "" })}>
+                    <PlusCircle className="mr-2 h-4 w-4" /> Add Travel Tip
+                  </Button>
                 </div>
             </CardContent>
           </Card>

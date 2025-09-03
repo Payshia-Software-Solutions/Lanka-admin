@@ -1,6 +1,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -17,6 +18,12 @@ export interface ThingToDo {
   description: string;
   image_url?: string | null;
   imageFile?: File;
+}
+
+export interface TravelTip {
+  heading: string;
+  icon: string;
+  description: string;
 }
 
 export interface Website {
@@ -58,10 +65,8 @@ export interface ApiDestination {
   
   gallery_image_urls?: string[];
   things_to_do?: ThingToDo[];
+  travel_tips?: TravelTip[];
   nearby_attractions?: string[];
-  travel_tip_heading?: string;
-  travel_tip_icon?: string;
-  travel_tip_description?: string;
   is_popular?: boolean;
 }
 
