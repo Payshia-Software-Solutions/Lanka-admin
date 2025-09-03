@@ -47,9 +47,9 @@ const ACCEPTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/web
 
 const imageFileSchema = z
   .any()
-  .refine((files) => files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
+  .refine((files) => !files || files.length === 0 || files?.[0]?.size <= MAX_FILE_SIZE, `Max file size is 5MB.`)
   .refine(
-    (files) => ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
+    (files) => !files || files.length === 0 || ACCEPTED_IMAGE_TYPES.includes(files?.[0]?.type),
     ".jpg, .jpeg, .png and .webp files are accepted."
   );
 
@@ -58,6 +58,10 @@ const thingToDoSchema = z.object({
   description: z.string().min(1, "Description is required."),
   imageUrl: z.any().optional(), // Now optional URL string for existing data
   imageFile: z.any().optional(), // For new file uploads
+});
+
+const galleryImageSchema = z.object({
+    file: z.any().optional(),
 });
 
 
@@ -70,7 +74,7 @@ const createDestinationSchema = z.object({
   introDescription: z.string().min(10, "Intro description must be at least 10 characters."),
   introImage: imageFileSchema.refine((files) => files?.length >= 1, "Intro image is required."),
 
-  galleryImages: z.any().optional(),
+  galleryImages: z.array(galleryImageSchema),
 
   thingsToDo: z.array(thingToDoSchema),
 
@@ -123,6 +127,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       heroSubheading: initialData?.hero_subheading || "",
       introHeading: initialData?.intro_heading || "",
       introDescription: initialData?.description || "",
+      galleryImages: [],
       thingsToDo: initialData?.things_to_do || [],
       nearbyAttractions: (initialData?.nearby_attractions || []).join(', '),
       travelTipHeading: initialData?.travel_tip_heading || "",
@@ -180,8 +185,10 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     }
 
     if (data.galleryImages && data.galleryImages.length > 0) {
-        data.galleryImages.forEach((file: File) => {
-            if (file) formData.append('gallery_images[]', file);
+        data.galleryImages.forEach((imageField) => {
+            if (imageField.file && imageField.file[0]) {
+                formData.append('gallery_images[]', imageField.file[0]);
+            }
         });
     }
 
@@ -383,20 +390,34 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
               <CardDescription>Add multiple images to showcase the destination.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <FormField
-                control={form.control}
-                name="galleryImages"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Upload Gallery Images</FormLabel>
-                     <FormControl>
-                        <Input type="file" accept="image/*" multiple onChange={(e) => field.onChange(Array.from(e.target.files || []))} />
-                    </FormControl>
-                    {isEditing && <FormDescription>Upload new images. This will replace the existing gallery.</FormDescription>}
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
+               {galleryFields.map((field, index) => (
+                <div key={field.id} className="flex items-center gap-2">
+                    <FormField
+                    control={form.control}
+                    name={`galleryImages.${index}.file`}
+                    render={({ field }) => (
+                        <FormItem className="flex-grow">
+                        <FormLabel className="sr-only">Gallery Image {index + 1}</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                    />
+                    <Button
+                        type="button"
+                        variant="destructive"
+                        size="icon"
+                        onClick={() => removeGallery(index)}
+                    >
+                        <Trash2 className="h-4 w-4" />
+                    </Button>
+                </div>
+              ))}
+               <Button type="button" variant="outline" onClick={() => appendGallery({ file: null })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add More Images
+              </Button>
             </CardContent>
           </Card>
           
@@ -450,36 +471,9 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                         </FormItem>
                     )}
                   />
-                  <FormField
-                    control={form.control}
-                    name={`thingsToDo.${index}.icon`}
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Icon</FormLabel>
-                        <Select onValueChange={field.onChange} defaultValue={field.value}>
-                          <FormControl>
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select an icon" />
-                            </SelectTrigger>
-                          </FormControl>
-                          <SelectContent>
-                            {ICONS.map(({value, icon: Icon}) => (
-                                <SelectItem key={value} value={value}>
-                                    <div className="flex items-center gap-2">
-                                        <Icon className="h-4 w-4" />
-                                        <span>{value}</span>
-                                    </div>
-                                </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
                 </div>
               ))}
-               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", imageUrl: "", icon: "Star" })}>
+               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", imageUrl: "" })}>
                 <PlusCircle className="mr-2 h-4 w-4" /> Add Thing to Do
               </Button>
             </CardContent>
