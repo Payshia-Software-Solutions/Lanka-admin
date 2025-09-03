@@ -64,12 +64,12 @@ const amenities = [
 ];
 
 const transportationOptions = [
-    { name: 'Flights', image: 'https://placehold.co/400x300.png', aiHint: 'airplane sky' },
-    { name: 'Rental Car', image: 'https://placehold.co/400x300.png', aiHint: 'rental car' },
-    { name: 'Public Transport', image: 'https://placehold.co/400x300.png', aiHint: 'public bus' },
-    { name: 'Rental Bike', image: 'https://placehold.co/400x300.png', aiHint: 'scooter rental' },
-    { name: 'Rental Van', image: 'https://placehold.co/400x300.png', aiHint: 'rental van' },
-    { name: 'Rental Bus', image: 'https://placehold.co/400x300.png', aiHint: 'tour bus' },
+    { name: 'Flights', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img21.webp', aiHint: 'airplane sky' },
+    { name: 'Rental Car', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img23.webp', aiHint: 'rental car' },
+    { name: 'Public Transport', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img20.webp', aiHint: 'public bus' },
+    { name: 'Rental Bike', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img24.webp', aiHint: 'scooter rental' },
+    { name: 'Rental Van', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img22.webp', aiHint: 'rental van' },
+    { name: 'Rental Bus', image: 'https://content-provider.payshia.com/travel-web/trip-plan/img19.webp', aiHint: 'tour bus' },
 ];
 
 const optionalAddons = [
