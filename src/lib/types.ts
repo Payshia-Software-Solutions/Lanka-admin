@@ -2,6 +2,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;

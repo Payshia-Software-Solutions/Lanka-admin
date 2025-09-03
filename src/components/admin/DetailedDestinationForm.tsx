@@ -218,8 +218,8 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     });
     
     if (Array.isArray(data.nearbyAttractions)) {
-        data.nearbyAttractions.forEach((attraction, index) => {
-            formData.append(`nearby_attractions[${index}]`, attraction);
+        data.nearbyAttractions.forEach((attraction) => {
+            formData.append(`nearby_attractions[]`, attraction);
         });
     }
 
