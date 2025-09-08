@@ -55,7 +55,7 @@ export interface ApiDestination {
   description: string;
   location: string;
   company_id: string | number;
-  map_url?: string;
+  map_link?: string;
   
   hero_heading?: string;
   hero_subheading?: string;
