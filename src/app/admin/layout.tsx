@@ -51,17 +51,12 @@ import {
 
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/websites', label: 'Websites', icon: Globe },
   { href: '/admin/destinations', label: 'Destinations', icon: MapPin },
   { href: '/admin/packages', label: 'Packages', icon: PackageIcon },
   { href: '/admin/tripplans', label: 'Trip Plans', icon: Plane },
   { href: '/admin/activities', label: 'Activities', icon: Footprints },
-  { href: '/admin/promotions', label: 'Promotions', icon: Percent },
-  { href: '/admin/cms', label: 'CMS Pages', icon: FileText },
   { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },
   { href: '/admin/inquiries', label: 'Inquiries', icon: MessageSquare },
-  { href: '/admin/users', label: 'Users & Roles', icon: Users },
-  { href: '/admin/pricing-suggestions', label: 'AI Pricing', icon: DollarSign },
   { href: '/admin/costing', label: 'Costing', icon: Receipt },
 ];
 
