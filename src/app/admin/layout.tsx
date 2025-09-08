@@ -52,7 +52,6 @@ import {
 const navItems = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/destinations', label: 'Destinations', icon: MapPin },
-  { href: '/admin/packages', label: 'Packages', icon: PackageIcon },
   { href: '/admin/tripplans', label: 'Trip Plans', icon: Plane },
   { href: '/admin/activities', label: 'Activities', icon: Footprints },
   { href: '/admin/blogs', label: 'Blogs', icon: Newspaper },
