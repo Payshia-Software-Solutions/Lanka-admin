@@ -60,6 +60,8 @@ export default function EditDestinationPage() {
   const handleSubmit = async (data: FormData) => {
     setIsSubmitting(true);
     
+    data.append('_method', 'PUT'); // Ensure _method is set for updates
+
     try {
         const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
             method: 'POST', // Using POST with _method override
