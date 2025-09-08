@@ -3,6 +3,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -54,6 +55,7 @@ export interface ApiDestination {
   description: string;
   location: string;
   company_id: string | number;
+  map_url?: string;
   
   hero_heading?: string;
   hero_subheading?: string;

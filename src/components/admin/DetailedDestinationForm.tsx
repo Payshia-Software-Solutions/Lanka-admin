@@ -76,6 +76,7 @@ const createDestinationSchema = z.object({
   websiteId: z.string().min(1, "Website ID is required."),
   location: z.string().min(3, "Location is required."),
   is_popular: z.boolean().default(false),
+  map_url: z.string().url("Must be a valid URL.").optional().or(z.literal('')),
 
   heroHeading: z.string().min(3, "Hero heading is required."),
   heroSubheading: z.string().min(3, "Hero sub-heading is required."),
@@ -130,6 +131,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       websiteId: initialData?.company_id?.toString() || "",
       location: initialData?.location || "",
       is_popular: initialData?.is_popular || false,
+      map_url: initialData?.map_url || "",
 
       heroHeading: initialData?.hero_heading || "",
       heroSubheading: initialData?.hero_subheading || "",
@@ -184,6 +186,7 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     appendIfExists('company_id', data.websiteId);
     appendIfExists('location', data.location);
     appendIfExists('is_popular', data.is_popular.toString());
+    appendIfExists('map_url', data.map_url);
 
     appendIfExists('hero_heading', data.heroHeading);
     appendIfExists('hero_subheading', data.heroSubheading);
@@ -538,6 +541,21 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                         <FormMessage />
                     </FormItem>
                     )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="map_url"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Map Link</FormLabel>
+                      <FormControl>
+                        <Input type="url" placeholder="https://maps.google.com/..." {...field} />
+                      </FormControl>
+                      <FormDescription>Paste a Google Maps link for the destination.</FormDescription>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
 
                 <Separator />
