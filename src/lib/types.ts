@@ -4,6 +4,7 @@
 
 
 
+
 export interface Activity {
   id: number;
   company_id: number;
@@ -118,6 +119,7 @@ export interface TripPlan {
   budget_range: string;
   estimated_cost: string;
   accommodation_type?: string;
+  created_at: string; // Added created_at
 }
 
 // Detailed view types
