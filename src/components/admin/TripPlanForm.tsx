@@ -10,7 +10,7 @@ import { ArrowRight, Info, MapPin, Search, Calendar as CalendarIcon, Users, Minu
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Calendar } from '@/components/ui/calendar';
 import { format, differenceInDays } from 'date-fns';
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Tooltip, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import Image from 'next/image';
 import { Badge } from '@/components/ui/badge';
 import { destinations as hardcodedDestinations } from '@/lib/destinations';
@@ -19,6 +19,7 @@ import type { ApiDestination, Destination, Activity as ActivityType, User, Costi
 import { Label } from '../ui/label';
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from '../ui/select';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const steps = [
   { id: 1, name: 'Destination & Dates' },
@@ -141,10 +142,10 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
             const companyId = JSON.parse(localStorage.getItem('loggedInUser') || '{}').company_id;
 
             const [destRes, actRes, usersRes, costRes] = await Promise.all([
-                fetch('http://localhost/travel_web_server/destinations'),
-                fetch('http://localhost/travel_web_server/activities'),
-                fetch('http://localhost/travel_web_server/users'),
-                fetch('http://localhost/travel_web_server/cost_settings')
+                fetch(`${API_BASE_URL}/destinations`),
+                fetch(`${API_BASE_URL}/activities`),
+                fetch(`${API_BASE_URL}/users`),
+                fetch(`${API_BASE_URL}/cost_settings`)
             ]);
             
             const apiDestData = await destRes.json();
@@ -203,7 +204,7 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
   }, [allActivities]);
 
   const getImageUrl = (url: string | null) => {
-    const baseUrl = 'https://content-provider.payshia.com/travel-web';
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BASE_URL || 'https://travel-server.payshia.com';
     if (!url) return 'https://placehold.co/400x300.png';
     if (url.startsWith('http')) return url;
     return `${baseUrl}${url.startsWith('/') ? '' : '/'}${url}`;
@@ -931,6 +932,3 @@ export function TripPlanForm({ onSubmitForm, isSubmitting = false }: TripPlanFor
     </div>
   );
 }
-
-    
-    

@@ -11,6 +11,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2 } from 'lucide-react';
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function SignupPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -31,7 +33,7 @@ export default function SignupPage() {
     setIsLoading(true);
 
     try {
-      const response = await fetch('http://localhost/travel_web_server/users', {
+      const response = await fetch(`${API_BASE_URL}/users`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

@@ -15,6 +15,7 @@ import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, 
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const LOCAL_STORAGE_PACKAGES_KEY = "LANKA_ADMIN_PACKAGES";
 
@@ -97,7 +98,7 @@ export default function PackagesPage() {
       if (!companyId) return;
       setIsLoadingAccommodation(true);
       try {
-        const response = await fetch('http://localhost/travel_web_server/accommodation_types');
+        const response = await fetch(`${API_BASE_URL}/accommodation_types`);
         if (!response.ok) throw new Error("Failed to fetch accommodation types");
         const allTypes = await response.json();
         const filteredTypes = allTypes.filter((type: AccommodationType) => type.company_id.toString() === companyId.toString());
@@ -114,7 +115,7 @@ export default function PackagesPage() {
       if (!companyId) return;
       setIsLoadingDestinations(true);
       try {
-        const response = await fetch('http://localhost/travel_web_server/destinations');
+        const response = await fetch(`${API_BASE_URL}/destinations`);
         if (!response.ok) throw new Error("Failed to fetch destinations");
         const allDestinations = await response.json();
         if (Array.isArray(allDestinations)) {
@@ -136,7 +137,7 @@ export default function PackagesPage() {
       if (!companyId) return;
       setIsLoadingHotels(true);
       try {
-        const response = await fetch('http://localhost/travel_web_server/hotels');
+        const response = await fetch(`${API_BASE_URL}/hotels`);
         if (!response.ok) throw new Error("Failed to fetch hotels");
         const allHotels = await response.json();
         if (Array.isArray(allHotels)) {
@@ -157,7 +158,7 @@ export default function PackagesPage() {
       if (!companyId) return;
       setIsLoadingMealTypes(true);
       try {
-        const response = await fetch('http://localhost/travel_web_server/meal_types');
+        const response = await fetch(`${API_BASE_URL}/meal_types`);
         if (!response.ok) throw new Error("Failed to fetch meal types");
         const allTypes = await response.json();
         if (Array.isArray(allTypes)) {
@@ -204,7 +205,7 @@ export default function PackagesPage() {
 
     setIsSubmittingAccommodation(true);
     try {
-        const response = await fetch('http://localhost/travel_web_server/accommodation_types', {
+        const response = await fetch(`${API_BASE_URL}/accommodation_types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ name: newAccommodationName, company_id: companyId }),
@@ -227,7 +228,7 @@ export default function PackagesPage() {
 
   const handleDeleteAccommodationType = async (id: number) => {
     try {
-        const response = await fetch(`http://localhost/travel_web_server/accommodation_types/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/accommodation_types/${id}`, {
             method: 'DELETE',
         });
         if (response.ok || response.status === 204) {
@@ -248,7 +249,7 @@ export default function PackagesPage() {
     if (!newHotel.name.trim() || !newHotel.accommodation_type_id || !newHotel.destination_id || !companyId) return;
     setIsSubmittingHotel(true);
     try {
-        const response = await fetch('http://localhost/travel_web_server/hotels', {
+        const response = await fetch(`${API_BASE_URL}/hotels`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ 
@@ -276,7 +277,7 @@ export default function PackagesPage() {
 
   const handleDeleteHotel = async (id: number) => {
     try {
-        const response = await fetch(`http://localhost/travel_web_server/hotels/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/hotels/${id}`, {
             method: 'DELETE',
         });
         if (response.ok || response.status === 204) {
@@ -297,7 +298,7 @@ export default function PackagesPage() {
     if (!newMealType.name.trim() || !companyId) return;
     setIsSubmittingMealType(true);
     try {
-        const response = await fetch('http://localhost/travel_web_server/meal_types', {
+        const response = await fetch(`${API_BASE_URL}/meal_types`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ ...newMealType, company_id: companyId }),
@@ -320,7 +321,7 @@ export default function PackagesPage() {
 
   const handleDeleteMealType = async (id: number) => {
     try {
-        const response = await fetch(`http://localhost/travel_web_server/meal_types/${id}`, {
+        const response = await fetch(`${API_BASE_URL}/meal_types/${id}`, {
             method: 'DELETE',
         });
         if (response.ok || response.status === 204) {

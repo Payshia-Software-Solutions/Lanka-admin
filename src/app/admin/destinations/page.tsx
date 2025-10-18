@@ -32,6 +32,7 @@ import type { Destination } from "@/lib/types";
 import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function DestinationsPage() {
   const [destinations, setDestinations] = useState<Destination[]>([]);
@@ -43,7 +44,7 @@ export default function DestinationsPage() {
       setIsLoading(true);
       try {
         // Fetch all destinations from the backend
-        const response = await fetch('http://localhost/travel_web_server/destinations');
+        const response = await fetch(`${API_BASE_URL}/destinations`);
         if (!response.ok) {
           throw new Error(`Failed to fetch destinations. Status: ${response.status}`);
         }
@@ -102,7 +103,7 @@ export default function DestinationsPage() {
     setDestinations(destinations.filter((dest) => dest.id.toString() !== destinationId));
 
     try {
-        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
+        const response = await fetch(`${API_BASE_URL}/destinations/${destinationId}`, {
             method: 'DELETE',
         });
 

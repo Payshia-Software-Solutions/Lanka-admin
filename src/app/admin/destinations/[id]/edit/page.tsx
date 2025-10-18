@@ -13,6 +13,9 @@ import { DetailedDestinationForm } from "@/components/admin/DetailedDestinationF
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+
 export default function EditDestinationPage() {
   const params = useParams();
   const router = useRouter();
@@ -29,7 +32,7 @@ export default function EditDestinationPage() {
     const fetchDestination = async () => {
       setIsLoadingData(true);
       try {
-        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`);
+        const response = await fetch(`${API_BASE_URL}/destinations/${destinationId}`);
         if (response.ok) {
           const data = await response.json();
           setDestination(data);
@@ -63,7 +66,7 @@ export default function EditDestinationPage() {
     data.append('_method', 'PUT'); // Ensure _method is set for updates
 
     try {
-        const response = await fetch(`http://localhost/travel_web_server/destinations/${destinationId}`, {
+        const response = await fetch(`${API_BASE_URL}/destinations/${destinationId}`, {
             method: 'POST', // Using POST with _method override
             body: data,
         });
@@ -136,19 +139,19 @@ export default function EditDestinationPage() {
                 {destination.hero_bg_image_url && (
                   <div>
                       <Label className="text-sm font-medium">Hero Image</Label>
-                      <Image src={`https://content-provider.payshia.com/travel-web${destination.hero_bg_image_url}`} alt="Current hero image" data-ai-hint="hero background" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                      <Image src={`${IMAGE_BASE_URL}${destination.hero_bg_image_url}`} alt="Current hero image" data-ai-hint="hero background" width={200} height={150} className="rounded-md object-cover mt-1 border" />
                   </div>
                 )}
                 {destination.intro_image_url && (
                   <div>
                       <Label className="text-sm font-medium">Intro Image</Label>
-                      <Image src={`https://content-provider.payshia.com/travel-web${destination.intro_image_url}`} alt="Current intro image" data-ai-hint="introduction" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                      <Image src={`${IMAGE_BASE_URL}${destination.intro_image_url}`} alt="Current intro image" data-ai-hint="introduction" width={200} height={150} className="rounded-md object-cover mt-1 border" />
                   </div>
                 )}
                 {destination.image_url && (
                   <div>
                       <Label className="text-sm font-medium">Main Image</Label>
-                      <Image src={`https://content-provider.payshia.com/travel-web${destination.image_url}`} alt="Current main image" data-ai-hint="main destination" width={200} height={150} className="rounded-md object-cover mt-1 border" />
+                      <Image src={`${IMAGE_BASE_URL}${destination.image_url}`} alt="Current main image" data-ai-hint="main destination" width={200} height={150} className="rounded-md object-cover mt-1 border" />
                   </div>
                 )}
               </div>
@@ -157,7 +160,7 @@ export default function EditDestinationPage() {
                   <Label className="text-sm font-medium">Gallery Images</Label>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-2">
                       {destination.gallery_image_urls.map((url, index) => (
-                        <Image key={index} src={`https://content-provider.payshia.com/travel-web${url}`} alt={`Gallery image ${index + 1}`} data-ai-hint="destination gallery" width={200} height={150} className="rounded-md object-cover border" />
+                        <Image key={index} src={`${IMAGE_BASE_URL}${url}`} alt={`Gallery image ${index + 1}`} data-ai-hint="destination gallery" width={200} height={150} className="rounded-md object-cover border" />
                       ))}
                   </div>
                 </div>
@@ -174,7 +177,7 @@ export default function EditDestinationPage() {
                       <div key={index} className="p-3 border rounded-md flex items-start gap-4 bg-background">
                          {item.image_url && (
                            <Image 
-                             src={`https://content-provider.payshia.com/travel-web${item.image_url}`} 
+                             src={`${IMAGE_BASE_URL}${item.image_url}`} 
                              alt={item.title}
                              data-ai-hint="thing to do"
                              width={120}

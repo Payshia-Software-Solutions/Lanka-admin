@@ -9,6 +9,7 @@ import { TripPlanForm, type TripPlanFormData } from "@/components/admin/TripPlan
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function NewTripPlanPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function NewTripPlanPage() {
     setIsSubmitting(true);
     
     try {
-      const response = await fetch('http://localhost/travel_web_server/trip_plans', {
+      const response = await fetch(`${API_BASE_URL}/trip_plans`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data)
@@ -70,4 +71,3 @@ export default function NewTripPlanPage() {
     </div>
   );
 }
-

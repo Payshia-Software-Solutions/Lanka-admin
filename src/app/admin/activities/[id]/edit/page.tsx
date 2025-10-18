@@ -19,6 +19,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import type { Activity } from "@/lib/types";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+
 export default function EditActivityPage() {
   const params = useParams();
   const router = useRouter();
@@ -36,7 +39,7 @@ export default function EditActivityPage() {
     const fetchActivity = async () => {
       setIsLoadingData(true);
       try {
-        const response = await fetch(`http://localhost/travel_web_server/activities/${activityId}`);
+        const response = await fetch(`${API_BASE_URL}/activities/${activityId}`);
         if (response.ok) {
           const data = await response.json();
           setActivity(data);
@@ -97,7 +100,7 @@ export default function EditActivityPage() {
     }
     
     try {
-      const response = await fetch(`http://localhost/travel_web_server/activities/${activityId}`, {
+      const response = await fetch(`${API_BASE_URL}/activities/${activityId}`, {
         method: 'POST',
         body: formData,
       });
@@ -222,7 +225,7 @@ export default function EditActivityPage() {
                     <div className="space-y-2">
                         <Label>Current Image</Label>
                         <Image
-                            src={`https://content-provider.payshia.com/travel-web${activity.image_url}`}
+                            src={`${IMAGE_BASE_URL}${activity.image_url}`}
                             alt={activity.name}
                             width={128}
                             height={128}

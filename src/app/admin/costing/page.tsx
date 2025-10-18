@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import type { Activity } from "@/lib/types";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const budgetRanges = [
     'Less than LKR 3000',
@@ -79,7 +80,7 @@ export default function CostingPage() {
             
             setIsLoading(true);
             try {
-                const response = await fetch('http://localhost/travel_web_server/cost_settings');
+                const response = await fetch(`${API_BASE_URL}/cost_settings`);
                 if (!response.ok) throw new Error("Failed to fetch cost settings.");
                 
                 const allSettings = await response.json();
@@ -116,7 +117,7 @@ export default function CostingPage() {
 
         const fetchActivities = async () => {
             try {
-                const response = await fetch("http://localhost/travel_web_server/activities");
+                const response = await fetch(`${API_BASE_URL}/activities`);
                 if (!response.ok) throw new Error("Failed to fetch activities");
                 const data = await response.json();
                 if(Array.isArray(data)) {
@@ -166,8 +167,8 @@ export default function CostingPage() {
 
         try {
             const url = settingsId 
-                ? `http://localhost/travel_web_server/cost_settings/${settingsId}`
-                : 'http://localhost/travel_web_server/cost_settings';
+                ? `${API_BASE_URL}/cost_settings/${settingsId}`
+                : `${API_BASE_URL}/cost_settings`;
             
             const method = settingsId ? 'PUT' : 'POST';
 

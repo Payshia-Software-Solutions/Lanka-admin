@@ -9,6 +9,7 @@ import { DetailedDestinationForm } from "@/components/admin/DetailedDestinationF
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 export default function NewDestinationPage() {
   const router = useRouter();
@@ -19,7 +20,7 @@ export default function NewDestinationPage() {
     setIsSubmitting(true);
 
     try {
-        const response = await fetch('http://localhost/travel_web_server/destinations', {
+        const response = await fetch(`${API_BASE_URL}/destinations`, {
             method: 'POST',
             body: data,
         });

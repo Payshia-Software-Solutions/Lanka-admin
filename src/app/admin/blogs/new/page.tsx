@@ -9,6 +9,8 @@ import { BlogForm, type BlogFormData } from "@/components/admin/BlogForm";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 export default function NewBlogPage() {
   const router = useRouter();
   const { toast } = useToast();
@@ -41,7 +43,7 @@ export default function NewBlogPage() {
     }
     
     try {
-      const response = await fetch('http://localhost/travel_web_server/blogs', {
+      const response = await fetch(`${API_BASE_URL}/blogs`, {
         method: 'POST',
         body: formData, // No 'Content-Type' header needed, browser sets it for FormData
       });

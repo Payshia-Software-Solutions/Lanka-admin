@@ -38,6 +38,8 @@ import {
 import { PlusCircle, Loader2, Trash2, Edit } from "lucide-react";
 import type { Activity } from "@/lib/types";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
 
 export default function ActivitiesPage() {
   const { toast } = useToast();
@@ -64,7 +66,7 @@ export default function ActivitiesPage() {
     };
     setIsLoading(true);
     try {
-      const response = await fetch("http://localhost/travel_web_server/activities");
+      const response = await fetch(`${API_BASE_URL}/activities`);
       if (!response.ok) throw new Error("Failed to fetch activities");
       const allActivities = await response.json();
       if (Array.isArray(allActivities)) {
@@ -113,7 +115,7 @@ export default function ActivitiesPage() {
     }
 
     try {
-      const response = await fetch("http://localhost/travel_web_server/activities", {
+      const response = await fetch(`${API_BASE_URL}/activities`, {
         method: "POST",
         body: formData,
       });
@@ -144,7 +146,7 @@ export default function ActivitiesPage() {
   const handleDeleteActivity = async (id: number) => {
     try {
       const response = await fetch(
-        `http://localhost/travel_web_server/activities/${id}`,
+        `${API_BASE_URL}/activities/${id}`,
         {
           method: "DELETE",
         }
@@ -290,7 +292,7 @@ export default function ActivitiesPage() {
                                 <TableCell>
                                     {activity.image_url ? (
                                         <Image
-                                            src={`https://content-provider.payshia.com/travel-web${activity.image_url}`}
+                                            src={`${IMAGE_BASE_URL}${activity.image_url}`}
                                             alt={activity.name}
                                             width={64}
                                             height={64}

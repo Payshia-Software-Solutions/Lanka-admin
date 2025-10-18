@@ -33,6 +33,9 @@ import { useToast } from "@/hooks/use-toast";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from "@/components/ui/badge";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+const IMAGE_BASE_URL = process.env.NEXT_PUBLIC_IMAGE_BASE_URL;
+
 interface Blog {
     id: number;
     company_id: number;
@@ -53,7 +56,7 @@ export default function BlogsPage() {
   const fetchBlogs = async () => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost/travel_web_server/blogs');
+      const response = await fetch(`${API_BASE_URL}/blogs`);
       if (!response.ok) throw new Error("Failed to fetch blogs");
       
       const allBlogs = await response.json();
@@ -100,7 +103,7 @@ export default function BlogsPage() {
     setBlogs(blogs.filter((blog) => blog.id !== blogId));
 
     try {
-        const response = await fetch(`http://localhost/travel_web_server/blogs/${blogId}`, {
+        const response = await fetch(`${API_BASE_URL}/blogs/${blogId}`, {
             method: 'DELETE',
         });
 
@@ -170,7 +173,7 @@ export default function BlogsPage() {
                      <TableCell>
                       {blog.image_url ? (
                          <Image 
-                            src={`https://content-provider.payshia.com/travel-web/${blog.image_url}`} 
+                            src={`${IMAGE_BASE_URL}${blog.image_url}`} 
                             alt={blog.title}
                             data-ai-hint="blog post image"
                             width={80}

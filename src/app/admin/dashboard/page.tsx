@@ -5,11 +5,13 @@ import { useState, useEffect } from "react";
 import { MetricCard } from "@/components/admin/MetricCard";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, MapPin, Package, MessageSquare, DollarSign, Globe, Loader2, Plane } from "lucide-react";
+import { Users, MapPin, Package, MessageSquare, DollarSign, Globe, Loader2, Plane, Newspaper } from "lucide-react";
 import dynamic from 'next/dynamic';
 import type { ApiDestination, TripPlan } from "@/lib/types";
 import { format, parseISO } from 'date-fns';
 import Link from "next/link";
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 const DynamicBarChart = dynamic(
   () => import('recharts').then(mod => {
@@ -31,7 +33,6 @@ const DynamicBarChart = dynamic(
           />
           <Legend wrapperStyle={{ fontSize: "14px" }} />
           <Bar dataKey="tripPlans" fill="hsl(var(--primary))" name="Trip Plans" radius={[4, 4, 0, 0]} />
-          <Bar dataKey="packagesSold" fill="hsl(var(--accent))" name="Packages Sold" radius={[4, 4, 0, 0]} />
         </BarChart>
       </ResponsiveContainer>
     );
@@ -46,6 +47,7 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [destinations, setDestinations] = useState<ApiDestination[]>([]);
   const [tripPlans, setTripPlans] = useState<TripPlan[]>([]);
+  const [blogs, setBlogs] = useState([]);
   const [chartData, setChartData] = useState<any[]>([]);
 
   useEffect(() => {
@@ -58,9 +60,10 @@ export default function DashboardPage() {
             return;
         }
 
-        const [destinationsRes, tripPlansRes] = await Promise.all([
-            fetch('http://localhost/travel_web_server/destinations'),
-            fetch('http://localhost/travel_web_server/trip_plans')
+        const [destinationsRes, tripPlansRes, blogsRes] = await Promise.all([
+            fetch(`${API_BASE_URL}/destinations`),
+            fetch(`${API_BASE_URL}/trip_plans`),
+            fetch(`${API_BASE_URL}/blogs`),
         ]);
 
         const allDestinations = await destinationsRes.json();
@@ -71,23 +74,18 @@ export default function DashboardPage() {
         
         const allTripPlans = await tripPlansRes.json();
         if (Array.isArray(allTripPlans)) {
-            const companyPlans = allTripPlans.filter(p => {
-                // This is a bit of a hack since trip_plans doesn't have a company_id
-                // We'll assume for now that an admin sees all plans.
-                // In a real app, this should be filtered by company on the backend.
-                return true; 
-            });
-            setTripPlans(companyPlans);
+            // Assuming trip plans are not company-specific for now as per previous logic
+            setTripPlans(allTripPlans);
             
             // Process data for chart
-            const monthlyData: {[key: string]: { name: string; tripPlans: number, packagesSold: number }} = {};
+            const monthlyData: {[key: string]: { name: string; tripPlans: number }} = {};
             const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 
             monthNames.forEach(name => {
-                monthlyData[name] = { name, tripPlans: 0, packagesSold: 20 + Math.floor(Math.random() * 30) }; // Dummy packages sold
+                monthlyData[name] = { name, tripPlans: 0 };
             });
 
-            companyPlans.forEach(plan => {
+            allTripPlans.forEach(plan => {
                 if (plan.created_at) {
                     const month = parseISO(plan.created_at).getMonth();
                     const monthName = monthNames[month];
@@ -97,6 +95,12 @@ export default function DashboardPage() {
                 }
             });
             setChartData(Object.values(monthlyData));
+        }
+
+        const allBlogs = await blogsRes.json();
+         if (Array.isArray(allBlogs)) {
+            const filteredBlogs = allBlogs.filter(b => b.company_id?.toString() === companyId.toString());
+            setBlogs(filteredBlogs);
         }
 
       } catch (error) {
@@ -128,13 +132,13 @@ export default function DashboardPage() {
         <MetricCard title="Total Websites" value="1" icon={Globe} description="Backend not connected" />
         <MetricCard title="Total Destinations" value={destinations.length} icon={MapPin} description="Managed destinations" />
         <MetricCard title="Total Trip Plans" value={tripPlans.length} icon={Plane} description="Custom & Pre-plans" />
-        <MetricCard title="New Inquiries" value="0" icon={MessageSquare} description="Backend not connected" />
+        <MetricCard title="Total Blogs" value={blogs.length} icon={Newspaper} description="Published blog posts" />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
           <CardHeader>
-            <CardTitle className="font-headline text-xl">Monthly Activity</CardTitle>
+            <CardTitle className="font-headline text-xl">Monthly Trip Plans</CardTitle>
             <CardDescription>Overview of newly created trip plans.</CardDescription>
           </CardHeader>
           <CardContent className="h-[350px] p-2">
@@ -145,7 +149,7 @@ export default function DashboardPage() {
         <Card>
           <CardHeader>
             <CardTitle className="font-headline text-xl">Recent Trip Plans</CardTitle>
-            <CardDescription>Summary of recently created trip plans.</CardDescription>
+            <CardDescription>Summary of the most recently created trip plans.</CardDescription>
           </CardHeader>
           <CardContent>
             {recentTripPlans.length > 0 ? (

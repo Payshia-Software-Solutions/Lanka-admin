@@ -232,10 +232,6 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       formData.append(`travel_tips[${index}][description]`, tip.description);
     });
     
-    if (isEditing) {
-        formData.append('_method', 'PUT');
-    }
-
     onSubmitForm(formData);
   };
 

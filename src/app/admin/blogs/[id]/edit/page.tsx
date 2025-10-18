@@ -9,6 +9,8 @@ import { ArrowLeft, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { BlogForm, type BlogFormData } from "@/components/admin/BlogForm";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
+
 interface Blog {
     id: number;
     title: string;
@@ -34,7 +36,7 @@ export default function EditBlogPage() {
     const fetchBlog = async () => {
       setIsLoadingData(true);
       try {
-        const response = await fetch(`http://localhost/travel_web_server/blogs/${blogId}`);
+        const response = await fetch(`${API_BASE_URL}/blogs/${blogId}`);
         if (response.ok) {
           const data = await response.json();
           setBlog(data);
@@ -84,7 +86,7 @@ export default function EditBlogPage() {
      }
 
     try {
-      const response = await fetch(`http://localhost/travel_web_server/blogs/${blogId}`, {
+      const response = await fetch(`${API_BASE_URL}/blogs/${blogId}`, {
         method: 'POST',
         body: formData,
       });

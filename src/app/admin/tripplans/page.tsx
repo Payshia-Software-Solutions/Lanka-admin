@@ -42,16 +42,17 @@ import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL;
 
 async function fetchTripPlanDetails(tripId: number): Promise<TripPlanDetails> {
   const urls = {
-    plan: `http://localhost/travel_web_server/trip_plans/${tripId}`,
-    activities: `http://localhost/travel_web_server/trip_activities/${tripId}`,
-    destinations: `http://localhost/travel_web_server/trip_destinations/${tripId}`,
-    transportations: `http://localhost/travel_web_server/trip_transportations/trip/${tripId}`,
-    interests: `http://localhost/travel_web_server/trip_interests/trip/${tripId}`,
-    addons: `http://localhost/travel_web_server/trip_addons/trip/${tripId}`,
-    amenities: `http://localhost/travel_web_server/trip_amenities/trip/${tripId}`,
+    plan: `${API_BASE_URL}/trip_plans/${tripId}`,
+    activities: `${API_BASE_URL}/trip_activities/${tripId}`,
+    destinations: `${API_BASE_URL}/trip_destinations/${tripId}`,
+    transportations: `${API_BASE_URL}/trip_transportations/trip/${tripId}`,
+    interests: `${API_BASE_URL}/trip_interests/trip/${tripId}`,
+    addons: `${API_BASE_URL}/trip_addons/trip/${tripId}`,
+    amenities: `${API_BASE_URL}/trip_amenities/trip/${tripId}`,
   };
 
   const responses = await Promise.all(
@@ -70,7 +71,7 @@ async function fetchTripPlanDetails(tripId: number): Promise<TripPlanDetails> {
   let user = null;
   if (plan && plan.user_id) {
     const userRes = await fetch(
-      `http://localhost/travel_web_server/users/${plan.user_id}`
+      `${API_BASE_URL}/users/${plan.user_id}`
     );
     if (userRes.ok) {
       user = await userRes.json();
@@ -103,7 +104,7 @@ export default function TripPlansPage() {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "http://localhost/travel_web_server/trip_plans"
+        `${API_BASE_URL}/trip_plans`
       );
       if (!response.ok) {
         throw new Error("Failed to fetch trip plans");
