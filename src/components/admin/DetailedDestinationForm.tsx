@@ -56,6 +56,7 @@ const imageFileSchema = z
 const thingToDoSchema = z.object({
   title: z.string().min(1, "Title is required."),
   description: z.string().min(1, "Description is required."),
+  category: z.string().optional(),
   image_url: z.string().optional(), // Existing URL from API
   imageFile: z.any().optional(), // For new file uploads
 });
@@ -84,7 +85,6 @@ const createDestinationSchema = z.object({
   
   introHeading: z.string().min(3, "Intro heading is required."),
   description: z.string().min(10, "Intro description must be at least 10 characters."),
-  introImage: imageFileSchema.refine((files) => files?.length >= 1, "Intro image is required."),
   
   image: imageFileSchema.refine((files) => files?.length >= 1, "Main destination image is required."),
 
@@ -99,7 +99,6 @@ const createDestinationSchema = z.object({
 
 const editDestinationSchema = createDestinationSchema.extend({
     heroBgImage: imageFileSchema.optional(),
-    introImage: imageFileSchema.optional(),
     image: imageFileSchema.optional(),
 });
 
@@ -121,7 +120,7 @@ interface DetailedDestinationFormProps {
     isEditing?: boolean;
 }
 
-export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmitting = false, isEditing = false }: DetailedDestinationFormProps) {
+export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmitting: isSubmittingProp = false, isEditing = false }: DetailedDestinationFormProps) {
   const router = useRouter();
 
   const form = useForm<DestinationFormData>({
@@ -146,6 +145,9 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       nearbyAttractions: (initialData?.nearby_attractions || []).join(', '),
     },
   });
+
+   const { formState: { isDirty } } = form;
+   const isSubmitting = isSubmittingProp || (!isDirty && isEditing);
 
    useEffect(() => {
     const storedUser = localStorage.getItem('loggedInUser');
@@ -196,9 +198,6 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
 
     appendIfExists('intro_heading', data.introHeading);
     appendIfExists('description', data.description);
-    if (data.introImage && data.introImage[0]) {
-        formData.append('intro_image', data.introImage[0]);
-    }
 
     if (data.image && data.image[0]) {
         formData.append('image', data.image[0]);
@@ -215,6 +214,9 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
     data.thingsToDo.forEach((item, index) => {
       formData.append(`things_to_do[${index}][title]`, item.title);
       formData.append(`things_to_do[${index}][description]`, item.description);
+      if (item.category) {
+        formData.append(`things_to_do[${index}][category]`, item.category);
+      }
       if (item.imageFile && item.imageFile[0]) {
         formData.append(`things_to_do[${index}][image]`, item.imageFile[0]);
       }
@@ -386,20 +388,40 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
                   </FormItem>
                 )}
               />
-              <FormField
-                  control={form.control}
-                  name="introImage"
-                  render={({ field }) => (
-                      <FormItem>
-                      <FormLabel>Intro Image</FormLabel>
-                      <FormControl>
-                          <Input type="file" accept="image/*" onChange={(e) => field.onChange(e.target.files)} />
-                      </FormControl>
-                      {isEditing && <FormDescription>Leave blank to keep the current image.</FormDescription>}
-                      <FormMessage />
-                      </FormItem>
-                  )}
-              />
+              <Separator />
+               <div>
+                  <h3 className="text-lg font-medium mb-2">Introduction Gallery</h3>
+                  <div className="space-y-4">
+                    {galleryFields.map((field, index) => (
+                      <div key={field.id} className="flex items-center gap-2">
+                          <FormField
+                          control={form.control}
+                          name={`galleryImages.${index}.file`}
+                          render={({ field: fileField }) => (
+                              <FormItem className="flex-grow">
+                              <FormLabel className="sr-only">Gallery Image {index + 1}</FormLabel>
+                              <FormControl>
+                                  <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
+                              </FormControl>
+                              <FormMessage />
+                              </FormItem>
+                          )}
+                          />
+                          <Button
+                              type="button"
+                              variant="destructive"
+                              size="icon"
+                              onClick={() => removeGallery(index)}
+                          >
+                              <Trash2 className="h-4 w-4" />
+                          </Button>
+                      </div>
+                    ))}
+                    <Button type="button" variant="outline" onClick={() => appendGallery({ file: null })}>
+                      <PlusCircle className="mr-2 h-4 w-4" /> Add Gallery Image
+                    </Button>
+                  </div>
+               </div>
             </CardContent>
           </Card>
 
@@ -425,79 +447,158 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
               />
             </CardContent>
           </Card>
-
-          <Card className="shadow-lg">
-            <CardHeader>
-              <CardTitle>Image Gallery</CardTitle>
-              <CardDescription>Add multiple images to showcase the destination.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-               {galleryFields.map((field, index) => (
-                <div key={field.id} className="flex items-center gap-2">
-                    <FormField
-                    control={form.control}
-                    name={`galleryImages.${index}.file`}
-                    render={({ field: fileField }) => (
-                        <FormItem className="flex-grow">
-                        <FormLabel className="sr-only">Gallery Image {index + 1}</FormLabel>
-                        <FormControl>
-                            <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
-                        </FormControl>
-                        <FormMessage />
-                        </FormItem>
-                    )}
-                    />
-                    <Button
-                        type="button"
-                        variant="destructive"
-                        size="icon"
-                        onClick={() => removeGallery(index)}
-                    >
-                        <Trash2 className="h-4 w-4" />
-                    </Button>
-                </div>
-              ))}
-               <Button type="button" variant="outline" onClick={() => appendGallery({ file: null })}>
-                <PlusCircle className="mr-2 h-4 w-4" /> Add More Images
-              </Button>
-            </CardContent>
-          </Card>
           
           <Card className="shadow-lg">
             <CardHeader>
-              <CardTitle>Things to Do</CardTitle>
-              <CardDescription>List activities and points of interest for visitors.</CardDescription>
+              <CardTitle>Key Locations</CardTitle>
+              <CardDescription>Highlight specific locations or attractions within the destination.</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              {thingsToDoFields.map((field, index) => (
+              {thingsToDoFields.filter(f => form.getValues(`thingsToDo.${f.id}.category`) === 'location').map((field, index) => (
                 <div key={field.id} className="space-y-4 rounded-lg border p-4 relative">
-                  <h4 className="font-semibold text-lg">Item {index + 1}</h4>
+                  <h4 className="font-semibold text-lg">Location {index + 1}</h4>
                    <Button
                       type="button"
                       variant="destructive"
                       size="icon"
-                      onClick={() => removeThingToDo(index)}
+                      onClick={() => removeThingToDo(thingsToDoFields.findIndex(f => f.id === field.id))}
                       className="absolute top-4 right-4"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   <FormField
                     control={form.control}
-                    name={`thingsToDo.${index}.title`}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.title`}
+                    render={({ field }) => (
+                      <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Location Title" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.description`}
+                    render={({ field }) => (
+                      <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Location Description" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.imageFile`}
+                    render={({ field: fileField }) => (
+                        <FormItem>
+                        <FormLabel>Image</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
+                        </FormControl>
+                        {isEditing && (
+                            <FormDescription>
+                                Leave blank to keep the current image for this item.
+                            </FormDescription>
+                        )}
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", category: "location", image_url: "", imageFile: null })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Key Location
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>Destination Highlights</CardTitle>
+              <CardDescription>Showcase other notable experiences or points of interest.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {thingsToDoFields.filter(f => form.getValues(`thingsToDo.${f.id}.category`) === 'highlight').map((field, index) => (
+                <div key={field.id} className="space-y-4 rounded-lg border p-4 relative">
+                  <h4 className="font-semibold text-lg">Highlight {index + 1}</h4>
+                   <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeThingToDo(thingsToDoFields.findIndex(f => f.id === field.id))}
+                      className="absolute top-4 right-4"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.title`}
+                    render={({ field }) => (
+                      <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Highlight Title" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.description`}
+                    render={({ field }) => (
+                      <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Highlight Description" {...field} /></FormControl><FormMessage /></FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.imageFile`}
+                    render={({ field: fileField }) => (
+                        <FormItem>
+                        <FormLabel>Image</FormLabel>
+                        <FormControl>
+                            <Input type="file" accept="image/*" onChange={(e) => fileField.onChange(e.target.files)} />
+                        </FormControl>
+                        {isEditing && (
+                            <FormDescription>
+                                Leave blank to keep the current image for this item.
+                            </FormDescription>
+                        )}
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                  />
+                </div>
+              ))}
+               <Button type="button" variant="outline" onClick={() => appendThingToDo({ title: "", description: "", category: "highlight", image_url: "", imageFile: null })}>
+                <PlusCircle className="mr-2 h-4 w-4" /> Add Highlight
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="shadow-lg">
+            <CardHeader>
+              <CardTitle>General Things to Do</CardTitle>
+              <CardDescription>List general activities and points of interest for visitors.</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {thingsToDoFields.filter(f => !form.getValues(`thingsToDo.${f.id}.category`)).map((field, index) => (
+                <div key={field.id} className="space-y-4 rounded-lg border p-4 relative">
+                  <h4 className="font-semibold text-lg">Item {index + 1}</h4>
+                   <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={() => removeThingToDo(thingsToDoFields.findIndex(f => f.id === field.id))}
+                      className="absolute top-4 right-4"
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  <FormField
+                    control={form.control}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.title`}
                     render={({ field }) => (
                       <FormItem><FormLabel>Title</FormLabel><FormControl><Input placeholder="Activity Title" {...field} /></FormControl><FormMessage /></FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name={`thingsToDo.${index}.description`}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.description`}
                     render={({ field }) => (
                       <FormItem><FormLabel>Description</FormLabel><FormControl><Textarea placeholder="Activity Description" {...field} /></FormControl><FormMessage /></FormItem>
                     )}
                   />
                   <FormField
                     control={form.control}
-                    name={`thingsToDo.${index}.imageFile`}
+                    name={`thingsToDo.${thingsToDoFields.findIndex(f => f.id === field.id)}.imageFile`}
                     render={({ field: fileField }) => (
                         <FormItem>
                         <FormLabel>Image</FormLabel>
@@ -622,12 +723,12 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
           </Card>
           
           <div className="flex items-center justify-end space-x-2">
-            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
+            <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmittingProp}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-              {isEditing ? "Save Changes" : "Create Destination"}
+            <Button type="submit" disabled={isEditing ? !isDirty || isSubmittingProp : isSubmittingProp}>
+                {isSubmittingProp ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isEditing ? 'Save Changes' : 'Create Destination'}
             </Button>
           </div>
 
@@ -635,3 +736,5 @@ export function DetailedDestinationForm({ initialData, onSubmitForm, isSubmittin
       </Form>
   );
 }
+
+    
